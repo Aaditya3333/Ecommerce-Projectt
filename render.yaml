@@ -1,7 +1,7 @@
 services:
   # Django Web Service
   - type: web
-    name: aaditya-store
+    name: ecommerce-projectt
     env: python
     plan: starter
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
@@ -18,16 +18,16 @@ services:
         value: false
       - key: DATABASE_URL
         fromDatabase:
-          name: aaditya-store-db
+          name: ecommerce-projectt-db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: aaditya-store.onrender.com,localhost,127.0.0.1
+        value: ecommerce-projectt.onrender.com,localhost,127.0.0.1
       - key: USE_POSTGRESQL
         value: true
 
   # PostgreSQL Database
   - type: pserv
-    name: aaditya-store-db
+    name: ecommerce-projectt-db
     plan: starter
     env: postgres
     databaseName: aaditya_store_db
