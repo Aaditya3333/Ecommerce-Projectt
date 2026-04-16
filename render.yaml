@@ -1,5 +1,4 @@
 services:
-  # Django Web Service
   - type: web
     name: ecommerce-projectt
     env: python
@@ -25,7 +24,6 @@ services:
       - key: USE_POSTGRESQL
         value: true
 
-  # PostgreSQL Database
   - type: pserv
     name: ecommerce-projectt-db
     plan: starter
