@@ -1,0 +1,184 @@
+{% extends 'base/base.html' %}
+{% load review_filters %}
+
+{% block title %}My Wishlist - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-heart"></i> My Wishlist</h2>
+        <div>
+            <span class="badge bg-primary">{{ total_items }} items</span>
+            <button class="btn btn-outline-danger btn-sm ms-2" onclick="clearWishlist()">
+                <i class="fas fa-trash"></i> Clear All
+            </button>
+        </div>
+    </div>
+    
+    {% if page_obj %}
+        <div class="row">
+            {% for item in page_obj %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 card-hover">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-box fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ item.product.name }}</h5>
+                        <p class="card-text">{{ item.product.description|truncatewords:10 }}</p>
+                        
+                        <!-- Reviews -->
+                        <div class="mb-2">
+                            {% with reviews=item.product.reviews.all %}
+                                {% if reviews %}
+                                    {% with avg_rating=reviews|average_rating %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-2">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= avg_rating %}
+                                                        <i class="fas fa-star text-warning" style="font-size: 12px;"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-warning" style="font-size: 12px;"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <small class="text-muted">({{ avg_rating|floatformat:1 }})</small>
+                                        </div>
+                                    {% endwith %}
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <h4 class="text-primary">${{ item.product.price }}</h4>
+                            {% if item.product.available %}
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'product_detail' item.product.pk %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye"></i> View Details
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-primary btn-sm" onclick="moveToCart({{ item.product.id }})">
+                                            <i class="fas fa-shopping-cart"></i> Move to Cart
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" onclick="removeFromWishlist({{ item.product.id }})">
+                                            <i class="fas fa-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+            <h4>Your wishlist is empty</h4>
+            <p class="text-muted">Start adding products you love to your wishlist!</p>
+            <a href="{% url 'services' %}" class="btn btn-primary">
+                <i class="fas fa-shopping-bag"></i> Browse Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function removeFromWishlist(productId) {
+    fetch(`/remove-from-wishlist/${productId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+}
+
+function clearWishlist() {
+    if (confirm('Are you sure you want to clear your entire wishlist?')) {
+        fetch('/clear-wishlist/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+
+function moveToCart(productId) {
+    fetch(`/move-to-cart/${productId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Product moved to cart!');
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

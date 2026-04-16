@@ -1,0 +1,531 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Virtual Try-On - {{ product.name }} - Aaditya Store{% endblock %}
+
+{% block extra_css %}
+<style>
+.virtual-try-on-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+}
+
+.try-on-stage {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    min-height: 500px;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-image-container, .result-image-container {
+    border: 3px dashed #ddd;
+    border-radius: 10px;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: #f8f9fa;
+}
+
+.result-image-container {
+    border-color: #28a745;
+}
+
+.upload-area {
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+}
+
+.upload-icon {
+    font-size: 4rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.processing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+
+.feature-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.feature-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    backdrop-filter: blur(10px);
+}
+
+.ar-button {
+    background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.ar-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.voice-button {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.voice-button:hover {
+    transform: scale(1.1);
+}
+
+.voice-button.recording {
+    animation: pulse 1.5s infinite;
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
+
+.ai-insights {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.confidence-meter {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.5s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h1 class="display-4 text-white">
+            <i class="fas fa-magic"></i> Virtual Try-On Experience
+        </h1>
+        <p class="lead text-white">Try {{ product.name }} virtually with AI-powered technology</p>
+    </div>
+
+    <div class="virtual-try-on-container">
+        <div class="row">
+            <!-- Left Panel - User Upload -->
+            <div class="col-lg-6 mb-4">
+                <h4><i class="fas fa-camera"></i> Your Photo</h4>
+                <div class="try-on-stage">
+                    <div id="userImageContainer" class="user-image-container">
+                        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-camera upload-icon"></i>
+                            <h5>Upload Your Photo</h5>
+                            <p class="text-muted">Click to upload or drag and drop</p>
+                            <small class="text-muted">Supports: JPG, PNG (Max 5MB)</small>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+                
+                <!-- Features -->
+                <div class="feature-badges">
+                    <span class="feature-badge"><i class="fas fa-brain"></i> AI-Powered</span>
+                    <span class="feature-badge"><i class="fas fa-bolt"></i> Instant Results</span>
+                    <span class="feature-badge"><i class="fas fa-shield-alt"></i> Privacy Safe</span>
+                </div>
+            </div>
+
+            <!-- Right Panel - Result -->
+            <div class="col-lg-6 mb-4">
+                <h4><i class="fas fa-eye"></i> Virtual Result</h4>
+                <div class="try-on-stage">
+                    <div id="resultImageContainer" class="result-image-container">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-magic" style="font-size: 4rem;"></i>
+                            <h5>Virtual Try-On Result</h5>
+                            <p>Upload your photo to see the magic happen!</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Processing Overlay -->
+                    <div id="processingOverlay" class="processing-overlay" style="display: none;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                <span class="visually-hidden">Processing...</span>
+                            </div>
+                            <h5 class="mt-3">AI is working...</h5>
+                            <p class="text-muted">Creating your virtual try-on experience</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Confidence Score -->
+                <div id="confidenceSection" class="mt-3" style="display: none;">
+                    <div class="ai-insights">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><i class="fas fa-chart-line"></i> AI Confidence</span>
+                            <span id="confidenceScore">0%</span>
+                        </div>
+                        <div class="confidence-meter">
+                            <div id="confidenceFill" class="confidence-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Info & Actions -->
+        <div class="row mt-4">
+            <div class="col-lg-8">
+                <div class="card bg-white text-dark">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                {% if product.image %}
+                                <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h5>{{ product.name }}</h5>
+                                <p class="text-muted">{{ product.category.name }}</p>
+                                <h4 class="text-primary">Rs.{{ product.price }}</h4>
+                                <div class="mt-2">
+                                    <span class="badge bg-success">In Stock</span>
+                                    <span class="badge bg-info">{{ try_on_data.try_on_type|title }} Try-On</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-primary" onclick="addToCart({{ product.id }})">
+                                        <i class="fas fa-shopping-cart"></i> Add to Cart
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="shareResult()">
+                                        <i class="fas fa-share"></i> Share
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="text-center">
+                    <h5>Try With Voice</h5>
+                    <button class="voice-button" id="voiceButton" onclick="toggleVoiceAssistant()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <p class="text-white small mt-2">Say "Try this on me"</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AR Option -->
+        {% if ar_data %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-white text-dark">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5><i class="fas fa-cube"></i> Augmented Reality Experience</h5>
+                                <p class="text-muted mb-0">See this product in your space with AR</p>
+                            </div>
+                            <button class="ar-button" onclick="openARViewer()">
+                                <i class="fas fa-cube"></i> Try AR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Hidden Audio Element for Voice Assistant -->
+<audio id="voiceResponse" style="display: none;"></audio>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTryOnId = null;
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+
+// File Upload Handler
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            return;
+        }
+        
+        uploadAndProcess(file);
+    }
+});
+
+// Drag and Drop
+const userContainer = document.getElementById('userImageContainer');
+userContainer.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    userContainer.style.borderColor = '#007bff';
+    userContainer.style.background = '#e3f2fd';
+});
+
+userContainer.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    userContainer.style.borderColor = '#ddd';
+    userContainer.style.background = '#f8f9fa';
+});
+
+userContainer.addEventListener('drop', (e) => {
+    e.preventDefault();
+    userContainer.style.borderColor = '#ddd';
+    userContainer.style.background = '#f8f9fa';
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        uploadAndProcess(file);
+    }
+});
+
+function uploadAndProcess(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        // Show uploaded image
+        const userContainer = document.getElementById('userImageContainer');
+        userContainer.innerHTML = `<img src="${e.target.result}" class="img-fluid rounded" alt="Your photo">`;
+        
+        // Show processing
+        document.getElementById('processingOverlay').style.display = 'flex';
+        
+        // Upload and process
+        const formData = new FormData();
+        formData.append('image', dataURLtoBlob(e.target.result));
+        formData.append('product_id', {{ product.id }});
+        
+        fetch('{% url "virtual_try_on_upload" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('processingOverlay').style.display = 'none';
+            
+            if (data.success) {
+                currentTryOnId = data.try_on_id;
+                showResult(data.result_url);
+                showConfidence(85); // Simulated confidence
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            document.getElementById('processingOverlay').style.display = 'none';
+            alert('Error processing image');
+        });
+    };
+    reader.readAsDataURL(file);
+}
+
+function showResult(imageUrl) {
+    const resultContainer = document.getElementById('resultImageContainer');
+    resultContainer.innerHTML = `<img src="${imageUrl}" class="img-fluid rounded" alt="Virtual try-on result">`;
+}
+
+function showConfidence(score) {
+    document.getElementById('confidenceSection').style.display = 'block';
+    document.getElementById('confidenceScore').textContent = score + '%';
+    document.getElementById('confidenceFill').style.width = score + '%';
+}
+
+// Voice Assistant
+async function toggleVoiceAssistant() {
+    const button = document.getElementById('voiceButton');
+    
+    if (!isRecording) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                sendVoiceCommand(audioBlob);
+            };
+            
+            mediaRecorder.start();
+            button.classList.add('recording');
+            isRecording = true;
+            
+            // Auto-stop after 5 seconds
+            setTimeout(() => {
+                if (isRecording) {
+                    stopRecording();
+                }
+            }, 5000);
+            
+        } catch (error) {
+            alert('Microphone access denied');
+        }
+    } else {
+        stopRecording();
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        
+        const button = document.getElementById('voiceButton');
+        button.classList.remove('recording');
+        isRecording = false;
+    }
+}
+
+function sendVoiceCommand(audioBlob) {
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    
+    fetch('{% url "voice_command" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Play voice response
+            if (data.voice_url) {
+                const audio = document.getElementById('voiceResponse');
+                audio.src = data.voice_url;
+                audio.play();
+            }
+            
+            // Handle voice commands
+            if (data.action === 'add_to_cart') {
+                addToCart({{ product.id }});
+            }
+        }
+    });
+}
+
+// Utility Functions
+function dataURLtoBlob(dataURL) {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], {type: mime});
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function addToCart(productId) {
+    // Add to cart logic
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Product added to cart!');
+        }
+    });
+}
+
+function shareResult() {
+    if (currentTryOnId) {
+        const shareUrl = window.location.href + '?try_on=' + currentTryOnId;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('Share link copied to clipboard!');
+        });
+    }
+}
+
+function openARViewer() {
+    window.open('{% url "ar_product_viewer" product.id %}', '_blank');
+}
+</script>
+{% endblock %}

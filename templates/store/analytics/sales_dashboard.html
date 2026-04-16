@@ -1,0 +1,271 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sales Dashboard - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-line"></i> Sales Dashboard</h2>
+        <div>
+            <span class="badge bg-primary">Admin Only</span>
+        </div>
+    </div>
+    
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h4 class="card-title">${{ total_revenue|floatformat:2 }}</h4>
+                    <p class="card-text">Total Revenue</p>
+                    <small>Last 30 days: ${{ revenue_last_30|floatformat:2 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h4 class="card-title">{{ total_orders }}</h4>
+                    <p class="card-text">Total Orders</p>
+                    <small>Last 30 days: {{ orders_last_30 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h4 class="card-title">{{ total_customers }}</h4>
+                    <p class="card-text">Total Customers</p>
+                    <small>Unique customers</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h4 class="card-title">{{ total_products }}</h4>
+                    <p class="card-text">Total Products</p>
+                    <small>{{ available_products }} available</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts and Tables -->
+    <div class="row">
+        <!-- Daily Sales Chart -->
+        <div class="col-md-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area"></i> Daily Sales (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailySalesChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Last 7 Days:</strong><br>
+                        Orders: {{ orders_last_7 }}<br>
+                        Revenue: ${{ revenue_last_7|floatformat:2 }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Products:</strong><br>
+                        Available: {{ available_products }}<br>
+                        Out of Stock: {{ out_of_stock }}
+                    </div>
+                    <div class="mb-3">
+                        <strong>Reviews:</strong><br>
+                        Total: {{ total_reviews }}<br>
+                        Average: {{ avg_rating|floatformat:1 }}/5
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products and Categories -->
+    <div class="row">
+        <!-- Top Products -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-trophy"></i> Top Selling Products</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'product_detail' product.product__id %}">
+                                            {{ product.product__name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ product.total_sold }}</td>
+                                    <td>${{ product.total_revenue|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No sales data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Categories -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-tags"></i> Top Categories</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Units Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in top_categories %}
+                                <tr>
+                                    <td>{{ category.product__category__name }}</td>
+                                    <td>{{ category.total_sold }}</td>
+                                    <td>${{ category.total_revenue|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No sales data available</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Orders -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shopping-cart"></i> Recent Orders</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.email }}</td>
+                                    <td>{{ order.created|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% with items=order.items.all %}
+                                            ${{ items|aggregate_price:items }}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if order.paid %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No orders found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Daily Sales Chart
+const ctx = document.getElementById('dailySalesChart').getContext('2d');
+const dailySalesChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [{% for sale in daily_sales %}'{{ sale.date }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Daily Revenue',
+            data: [{% for sale in daily_sales %}{{ sale.revenue }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toLocaleString();
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Revenue: $' + context.parsed.y.toLocaleString();
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

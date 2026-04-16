@@ -1,0 +1,25 @@
+{% if suggestions %}
+    <div class="list-group">
+        {% for suggestion in suggestions %}
+            <a href="{{ suggestion.url }}" class="list-group-item list-group-item-action">
+                <div class="d-flex align-items-center">
+                    {% if suggestion.image %}
+                        <img src="{{ suggestion.image }}" alt="{{ suggestion.name }}" class="me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <i class="fas fa-box text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div class="fw-bold">{{ suggestion.name }}</div>
+                        <small class="text-muted">${{ suggestion.price }}</small>
+                    </div>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-3">
+        <p class="text-muted">No suggestions found</p>
+    </div>
+{% endif %}

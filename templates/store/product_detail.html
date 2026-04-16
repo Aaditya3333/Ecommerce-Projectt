@@ -1,0 +1,183 @@
+{% extends 'base/base.html' %}
+{% load review_filters %}
+
+{% block title %}{{ product.name }} - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        {% if product.image %}
+            <img src="{{ product.image.url }}" class="img-fluid rounded" alt="{{ product.name }}">
+        {% else %}
+            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 400px;">
+                <i class="fas fa-box fa-5x text-muted"></i>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <h1>{{ product.name }}</h1>
+        <p class="text-muted">Category: <a href="{% url 'category_products' product.category.pk %}">{{ product.category.name }}</a></p>
+        
+        <!-- Reviews and Ratings -->
+        <div class="mb-3">
+            {% with reviews=product.reviews.all %}
+                {% if reviews %}
+                    {% with avg_rating=reviews|average_rating total_reviews=reviews|length %}
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= avg_rating %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="text-muted">({{ avg_rating|floatformat:1 }}) - {{ total_reviews }} reviews</span>
+                            <a href="{% url 'product_reviews' product.pk %}" class="btn btn-sm btn-outline-primary ms-2">
+                                <i class="fas fa-eye"></i> View All
+                            </a>
+                        </div>
+                    {% endwith %}
+                {% else %}
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            {% for i in "12345" %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="text-muted">No reviews yet</span>
+                        <a href="{% url 'product_reviews' product.pk %}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="fas fa-pen"></i> Be First to Review
+                        </a>
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="mb-3">
+            <h3 class="text-primary">${{ product.price }}</h3>
+            {% if product.available %}
+                <span class="badge bg-success">In Stock</span>
+                <small class="text-muted">({{ product.stock }} available)</small>
+            {% else %}
+                <span class="badge bg-danger">Out of Stock</span>
+            {% endif %}
+        </div>
+
+        <div class="mb-4">
+            <h5>Description</h5>
+            <p>{{ product.description }}</p>
+        </div>
+
+        {% if product.available %}
+            <div class="d-grid gap-2">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'cart_add' product.id %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </a>
+                    {% if user.is_authenticated %}
+                        <button class="btn btn-outline-danger btn-lg" onclick="toggleWishlist({{ product.id }})">
+                            <i class="fas fa-heart"></i> <span id="wishlist-text">Add to Wishlist</span>
+                        </button>
+                        <button class="btn btn-outline-info btn-lg" onclick="addToComparison({{ product.id }})">
+                            <i class="fas fa-balance-scale"></i> Compare
+                        </button>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-outline-danger btn-lg">
+                            <i class="fas fa-heart"></i> Add to Wishlist
+                        </a>
+                        <a href="{% url 'login' %}" class="btn btn-outline-info btn-lg">
+                            <i class="fas fa-balance-scale"></i> Compare
+                        </a>
+                    {% endif %}
+                </div>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg">Continue Shopping</a>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                This product is currently out of stock.
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <small class="text-muted">
+                <p><strong>Product ID:</strong> {{ product.id }}</p>
+                <p><strong>Added on:</strong> {{ product.created|date:"F d, Y" }}</p>
+                <p><strong>Last updated:</strong> {{ product.updated|date:"F d, Y" }}</p>
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h3>Related Products</h3>
+        <div class="row">
+            {% for related_product in product.category.products.all %}
+                {% if related_product.id != product.id %}
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100">
+                        {% if related_product.image %}
+                            <img src="{{ related_product.image.url }}" class="card-img-top" alt="{{ related_product.name }}" style="height: 150px; object-fit: cover;">
+                        {% else %}
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                                <i class="fas fa-box fa-2x text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h6 class="card-title">{{ related_product.name|truncatewords:5 }}</h6>
+                            <h6 class="text-primary">${{ related_product.price }}</h6>
+                            <a href="{% url 'product_detail' related_product.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleWishlist(productId) {
+    fetch(`/add-to-wishlist/${productId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const wishlistText = document.getElementById('wishlist-text');
+                wishlistText.textContent = 'Remove from Wishlist';
+                const button = event.target.closest('button');
+                button.classList.remove('btn-outline-danger');
+                button.classList.add('btn-danger');
+            } else if (data.message) {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function addToComparison(productId) {
+    fetch(`/add-to-comparison/?product_id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Product added to comparison! You can compare up to 4 products.');
+                // Optionally redirect to comparison page
+                if (data.count >= 2) {
+                    if (confirm('Would you like to view the comparison page now?')) {
+                        window.location.href = '/compare/';
+                    }
+                }
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add product to comparison. Please try again.');
+        });
+}
+</script>
+{% endblock %}

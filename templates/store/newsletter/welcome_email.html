@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to Aaditya Store Newsletter</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; }
+        .header { text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+        .content { line-height: 1.6; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Aaditya Store!</h1>
+            <p>Your journey to amazing products starts here</p>
+        </div>
+        
+        <div class="content">
+            <p>Hello {{ first_name|default:"Valued Customer" }},</p>
+            
+            <p>Thank you for subscribing to our newsletter! We're excited to have you as part of our community.</p>
+            
+            <p>By subscribing, you'll receive:</p>
+            <ul>
+                <li>Exclusive deals and discounts</li>
+                <li>Early access to new products</li>
+                <li>Personalized recommendations</li>
+                <li>Latest updates and trends</li>
+            </ul>
+            
+            <p>Start exploring our amazing collection today!</p>
+            
+            <div style="text-align: center;">
+                <a href="http://127.0.0.1:8000/" class="btn">Shop Now</a>
+            </div>
+            
+            <p>If you have any questions, feel free to reach out to our customer support team.</p>
+            
+            <p>Happy shopping!</p>
+            
+            <p>Best regards,<br>The Aaditya Store Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2024 Aaditya Store. All rights reserved.</p>
+            <p>If you no longer wish to receive these emails, you can unsubscribe at any time.</p>
+        </div>
+    </div>
+</body>
+</html>

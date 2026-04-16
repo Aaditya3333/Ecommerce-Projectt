@@ -1,0 +1,422 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Voice Search - Aaditya Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-microphone"></i> Voice Search
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <!-- Voice Search Interface -->
+                    <div class="voice-search-container mb-4">
+                        <div class="voice-search-circle" id="voiceSearchCircle">
+                            <i class="fas fa-microphone fa-3x" id="micIcon"></i>
+                        </div>
+                        <p class="mt-3 text-muted">Click the microphone and speak to search</p>
+                    </div>
+
+                    <!-- Search Results -->
+                    <div id="searchResults" class="search-results" style="display: none;">
+                        <h5>Search Results for: <span id="searchQuery"></span></h5>
+                        <div class="row" id="resultsContainer">
+                            <!-- Results will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Searching...</span>
+                        </div>
+                        <p class="mt-2">Listening and searching...</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="alert alert-danger" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span>
+                    </div>
+
+                    <!-- Voice Commands Help -->
+                    <div class="voice-commands-help mt-4">
+                        <h5>Voice Commands You Can Use:</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-search text-primary"></i> "Show me [product name]"</li>
+                                    <li><i class="fas fa-dollar-sign text-success"></i> "Find cheap [product]"</li>
+                                    <li><i class="fas fa-star text-warning"></i> "Show me best [category]"</li>
+                                    <li><i class="fas fa-plus text-info"></i> "Add [product] to cart"</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-heart text-danger"></i> "Show my wishlist"</li>
+                                    <li><i class="fas fa-shopping-cart text-primary"></i> "Go to checkout"</li>
+                                    <li><i class="fas fa-home text-secondary"></i> "Take me home"</li>
+                                    <li><i class="fas fa-clock text-info"></i> "Show me new arrivals"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Voice Search Implementation
+class VoiceSearch {
+    constructor() {
+        this.recognition = null;
+        this.isListening = false;
+        this.init();
+    }
+
+    init() {
+        // Check for browser support
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            this.recognition = new SpeechRecognition();
+            this.setupRecognition();
+        } else {
+            this.showError('Your browser does not support voice search. Please try Chrome or Edge.');
+        }
+    }
+
+    setupRecognition() {
+        this.recognition.continuous = false;
+        this.recognition.interimResults = false;
+        this.recognition.lang = 'en-US';
+
+        this.recognition.onstart = () => {
+            this.startListening();
+        };
+
+        this.recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            this.handleVoiceResult(transcript);
+        };
+
+        this.recognition.onerror = (event) => {
+            this.handleError(event.error);
+        };
+
+        this.recognition.onend = () => {
+            this.stopListening();
+        };
+    }
+
+    startListening() {
+        this.isListening = true;
+        const circle = document.getElementById('voiceSearchCircle');
+        const micIcon = document.getElementById('micIcon');
+        
+        circle.classList.add('listening');
+        micIcon.classList.remove('fa-microphone');
+        micIcon.classList.add('fa-microphone-slash');
+        
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    stopListening() {
+        this.isListening = false;
+        const circle = document.getElementById('voiceSearchCircle');
+        const micIcon = document.getElementById('micIcon');
+        
+        circle.classList.remove('listening');
+        micIcon.classList.remove('fa-microphone-slash');
+        micIcon.classList.add('fa-microphone');
+        
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+
+    handleVoiceResult(transcript) {
+        console.log('Voice result:', transcript);
+        
+        // Check if it's a command or search
+        if (this.isCommand(transcript)) {
+            this.handleCommand(transcript);
+        } else {
+            this.performSearch(transcript);
+        }
+    }
+
+    isCommand(text) {
+        const commands = ['add to cart', 'show wishlist', 'view wishlist', 'checkout', 'buy now', 'home'];
+        return commands.some(cmd => text.toLowerCase().includes(cmd));
+    }
+
+    handleCommand(command) {
+        fetch('/voice-commands/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ command: command })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.action === 'navigate') {
+                    window.location.href = data.url;
+                } else {
+                    this.showMessage(data.message, 'success');
+                }
+            } else {
+                this.showError(data.error);
+            }
+        })
+        .catch(error => {
+            this.showError('Command failed. Please try again.');
+        });
+    }
+
+    performSearch(query) {
+        fetch('/voice-search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ query: query })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.displayResults(data);
+            } else {
+                this.showError(data.error);
+            }
+        })
+        .catch(error => {
+            this.showError('Search failed. Please try again.');
+        });
+    }
+
+    displayResults(data) {
+        document.getElementById('searchQuery').textContent = data.query;
+        document.getElementById('searchResults').style.display = 'block';
+        
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = '';
+        
+        if (data.results.length === 0) {
+            container.innerHTML = '<div class="col-12"><p class="text-muted">No products found for your search.</p></div>';
+            return;
+        }
+        
+        data.results.forEach(product => {
+            const productCard = this.createProductCard(product);
+            container.innerHTML += productCard;
+        });
+    }
+
+    createProductCard(product) {
+        return `
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100">
+                    ${product.image ? 
+                        `<img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 150px; object-fit: cover;">` :
+                        `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
+                            <i class="fas fa-box fa-2x text-muted"></i>
+                        </div>`
+                    }
+                    <div class="card-body">
+                        <h6 class="card-title">${product.name}</h6>
+                        <p class="text-muted small">${product.category}</p>
+                        <p class="card-text">${product.description}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-primary fw-bold">$${product.price}</span>
+                            <span class="badge ${product.available ? 'bg-success' : 'bg-danger'}">
+                                ${product.available ? 'Available' : 'Out of Stock'}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <a href="${product.url}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            ${product.available ? 
+                                `<a href="/cart/add/${product.id}/" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </a>` : ''
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    handleError(error) {
+        let message = 'Voice search error. Please try again.';
+        
+        switch(error) {
+            case 'no-speech':
+                message = 'No speech detected. Please try again.';
+                break;
+            case 'audio-capture':
+                message = 'Microphone not available. Please check your permissions.';
+                break;
+            case 'not-allowed':
+                message = 'Microphone permission denied. Please allow microphone access.';
+                break;
+        }
+        
+        this.showError(message);
+    }
+
+    showError(message) {
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('errorMessage').style.display = 'block';
+        document.getElementById('searchResults').style.display = 'none';
+    }
+
+    showMessage(message, type) {
+        // Create a temporary message element
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.card-body').firstChild);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+
+    start() {
+        if (this.recognition && !this.isListening) {
+            this.recognition.start();
+        }
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize voice search when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const voiceSearch = new VoiceSearch();
+    
+    // Add click event to microphone
+    document.getElementById('voiceSearchCircle').addEventListener('click', function() {
+        voiceSearch.start();
+    });
+});
+</script>
+
+<style>
+.voice-search-container {
+    padding: 40px 0;
+}
+
+.voice-search-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.voice-search-circle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.voice-search-circle.listening {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+}
+
+.voice-search-circle i {
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.voice-search-circle:hover i {
+    transform: scale(1.1);
+}
+
+.search-results {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.loading-indicator {
+    padding: 20px;
+}
+
+.voice-commands-help {
+    background: #e9ecef;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 30px;
+}
+
+.voice-commands-help h5 {
+    color: #495057;
+    margin-bottom: 15px;
+}
+
+.voice-commands-help ul li {
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.voice-commands-help ul li i {
+    margin-right: 8px;
+}
+</style>
+{% endblock %}

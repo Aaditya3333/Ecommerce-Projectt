@@ -1,0 +1,164 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Loyalty Program - Aaditya Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Loyalty Status Card -->
+        <div class="col-lg-4">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-crown"></i> {{ current_tier.name|default:"Member" }}
+                    </h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h3 class="mb-0">{{ customer_loyalty.total_points }}</h3>
+                            <small>Total Points</small>
+                        </div>
+                        <div class="text-end">
+                            <h3 class="mb-0">{{ customer_loyalty.available_points }}</h3>
+                            <small>Available</small>
+                        </div>
+                    </div>
+                    
+                    {% if next_tier %}
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: 50%"></div>
+                    </div>
+                    <small>{{ points_to_next_tier }} points to {{ next_tier.name }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'loyalty_earn_points' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus-circle"></i> Earn Points
+                        </a>
+                        <a href="{% url 'loyalty_tiers' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-layer-group"></i> View Tiers
+                        </a>
+                        <a href="{% url 'loyalty_referral' %}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-user-plus"></i> Refer Friends
+                        </a>
+                        <a href="{% url 'loyalty_history' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-history"></i> View History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Available Rewards -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gift"></i> Available Rewards
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if available_rewards %}
+                        <div class="row">
+                            {% for reward in available_rewards %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title">{{ reward.name }}</h6>
+                                        <p class="card-text small">{{ reward.description|truncatechars:80 }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="badge bg-primary">{{ reward.points_required }} Points</span>
+                                            {% if reward.stock_quantity > 0 %}
+                                            <a href="{% url 'loyalty_redeem_reward' reward.id %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-exchange-alt"></i> Redeem
+                                            </a>
+                                            {% else %}
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-gift fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No rewards available at the moment. Earn more points to unlock rewards!</p>
+                            <a href="{% url 'loyalty_earn_points' %}" class="btn btn-primary">
+                                <i class="fas fa-plus-circle"></i> Earn Points
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activity %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">{{ activity.reason }}</div>
+                                    <small class="text-muted">{{ activity.created|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    {% if activity.transaction_type == 'earned' %}
+                                    <span class="badge bg-success">+{{ activity.points }}</span>
+                                    {% elif activity.transaction_type == 'redeemed' %}
+                                    <span class="badge bg-danger">-{{ activity.points }}</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ activity.points }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'loyalty_history' %}" class="btn btn-outline-primary btn-sm">
+                                View Full History
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No activity yet. Start earning points!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+</style>

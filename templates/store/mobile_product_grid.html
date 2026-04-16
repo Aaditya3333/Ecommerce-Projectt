@@ -1,0 +1,778 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Products - Aaditya Store{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Mobile-First Product Grid */
+.product-container {
+    padding: 1rem 0;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.product-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+    height: 250px;
+    background: #f8f9fa;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.badge-new, .badge-sale {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-new {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+}
+
+.badge-sale {
+    background: linear-gradient(45deg, #dc3545, #fd7e14);
+    color: white;
+}
+
+.product-wishlist {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.product-wishlist:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.product-wishlist.active {
+    color: #dc3545;
+}
+
+.product-details {
+    padding: 1.25rem;
+}
+
+.product-category {
+    color: #6c757d;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.product-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+    color: #212529;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.stars {
+    color: #ffc107;
+    font-size: 0.9rem;
+}
+
+.rating-count {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.product-price {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.current-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #28a745;
+}
+
+.original-price {
+    font-size: 1.1rem;
+    color: #6c757d;
+    text-decoration: line-through;
+}
+
+.discount-percentage {
+    background: #dc3545;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.product-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-add-cart {
+    flex: 1;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    min-height: 44px;
+}
+
+.btn-add-cart:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: translateY(-2px);
+}
+
+.btn-quick-view {
+    background: rgba(0, 123, 255, 0.1);
+    border: 1px solid #007bff;
+    color: #007bff;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+.btn-quick-view:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .product-card {
+        border-radius: 12px;
+    }
+    
+    .product-image-container {
+        height: 200px;
+    }
+    
+    .product-details {
+        padding: 1rem;
+    }
+    
+    .product-name {
+        font-size: 1rem;
+    }
+    
+    .current-price {
+        font-size: 1.25rem;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-add-cart, .btn-quick-view {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .product-image-container {
+        height: 250px;
+    }
+    
+    .product-details {
+        padding: 1rem;
+    }
+    
+    .current-price {
+        font-size: 1.3rem;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .product-card:hover {
+        transform: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .product-card:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-add-cart:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-image {
+    height: 250px;
+}
+
+.skeleton-text {
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.skeleton-price {
+    height: 30px;
+    width: 100px;
+    border-radius: 4px;
+}
+
+/* Filter sidebar mobile */
+.filter-sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.filter-toggle {
+    display: none;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    width: 100%;
+    touch-action: manipulation;
+}
+
+@media (max-width: 992px) {
+    .filter-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 80%;
+        max-width: 350px;
+        height: 100vh;
+        z-index: 1050;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        border-radius: 0;
+    }
+    
+    .filter-sidebar.active {
+        left: 0;
+    }
+    
+    .filter-toggle {
+        display: block;
+    }
+    
+    .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+        display: none;
+    }
+    
+    .filter-overlay.active {
+        display: block;
+    }
+}
+
+/* Dark mode mobile */
+body.dark-mode .product-card {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+
+body.dark-mode .product-name {
+    color: #ffffff;
+}
+
+body.dark-mode .product-description {
+    color: #b0b0b0;
+}
+
+body.dark-mode .filter-sidebar {
+    background: #2d2d2d;
+    color: #e0e0e0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container product-container">
+    <div class="row">
+        <!-- Mobile Filter Toggle -->
+        <div class="col-12 d-lg-none">
+            <button class="filter-toggle" onclick="toggleFilters()">
+                <i class="fas fa-filter"></i> Filters
+            </button>
+        </div>
+        
+        <!-- Filter Sidebar -->
+        <div class="col-lg-3">
+            <div class="filter-sidebar" id="filterSidebar">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0">Filters</h5>
+                    <button class="btn btn-sm btn-outline-secondary d-lg-none" onclick="toggleFilters()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Categories</h6>
+                    <div class="form-check">
+                        {% for category in categories %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="cat{{ category.id }}" value="{{ category.id }}">
+                            <label class="form-check-label" for="cat{{ category.id }}">
+                                {{ category.name }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Price Range -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Price Range</h6>
+                    <div class="mb-3">
+                        <label for="minPrice" class="form-label">Min Price</label>
+                        <input type="number" class="form-control" id="minPrice" placeholder="0">
+                    </div>
+                    <div>
+                        <label for="maxPrice" class="form-label">Max Price</label>
+                        <input type="number" class="form-control" id="maxPrice" placeholder="10000">
+                    </div>
+                </div>
+                
+                <!-- Rating Filter -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Rating</h6>
+                    <div class="form-check">
+                        {% for i in "4321"|make_list %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="rating" id="rating{{ i }}" value="{{ i }}">
+                            <label class="form-check-label" for="rating{{ i }}">
+                                {% for star in "12345"|make_list %}
+                                    {% if forloop.counter <= i %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                & Up
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Sort Options -->
+                <div class="mb-4">
+                    <h6 class="mb-3">Sort By</h6>
+                    <select class="form-select" id="sortOptions">
+                        <option value="name">Name</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="rating">Rating</option>
+                        <option value="newest">Newest</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary w-100" onclick="applyFilters()">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+        
+        <!-- Product Grid -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Products</h4>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">{{ products.count }} products</span>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary btn-sm active" onclick="setView('grid')">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setView('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="product-grid" id="productGrid">
+                {% for product in products %}
+                <div class="product-card">
+                    <div class="product-image-container">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                        {% else %}
+                        <div class="product-image d-flex align-items-center justify-content-center bg-light">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Badges -->
+                        <div class="product-badges">
+                            {% if product.is_new %}
+                            <span class="badge-new">New</span>
+                            {% endif %}
+                            {% if product.discount_percentage %}
+                            <span class="badge-sale">{{ product.discount_percentage }}% OFF</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Wishlist Button -->
+                        <button class="product-wishlist" onclick="toggleWishlist({{ product.id }})">
+                            <i class="far fa-heart"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="product-details">
+                        <div class="product-category">{{ product.category.name }}</div>
+                        <h5 class="product-name">{{ product.name }}</h5>
+                        <p class="product-description">{{ product.description }}</p>
+                        
+                        <div class="product-rating">
+                            <div class="stars">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= product.average_rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="rating-count">({{ product.reviews.count }})</span>
+                        </div>
+                        
+                        <div class="product-price">
+                            <span class="current-price">Rs.{{ product.price }}</span>
+                            {% if product.original_price %}
+                            <span class="original-price">Rs.{{ product.original_price }}</span>
+                            <span class="discount-percentage">{{ product.discount_percentage }}%</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="btn-add-cart" onclick="addToCart({{ product.id }})">
+                                <i class="fas fa-shopping-cart"></i> Add to Cart
+                            </button>
+                            <button class="btn-quick-view" onclick="quickView({{ product.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Product pagination">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Filter Overlay -->
+<div class="filter-overlay" id="filterOverlay" onclick="toggleFilters()"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mobile filter toggle
+function toggleFilters() {
+    const sidebar = document.getElementById('filterSidebar');
+    const overlay = document.getElementById('filterOverlay');
+    
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
+// Product interactions
+function addToCart(productId) {
+    // Add to cart logic
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Product added to cart!', 'success');
+            updateCartCount();
+        }
+    });
+}
+
+function toggleWishlist(productId) {
+    const button = event.currentTarget;
+    const icon = button.querySelector('i');
+    
+    // Toggle wishlist logic
+    fetch(`/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            icon.classList.toggle('far');
+            icon.classList.toggle('fas');
+            button.classList.toggle('active');
+            showNotification(data.message, 'info');
+        }
+    });
+}
+
+function quickView(productId) {
+    // Quick view modal logic
+    fetch(`/product/quick-view/${productId}/`)
+    .then(response => response.json())
+    .then(data => {
+        // Show quick view modal
+        showQuickViewModal(data);
+    });
+}
+
+function applyFilters() {
+    const filters = {
+        categories: getCheckedCategories(),
+        minPrice: document.getElementById('minPrice').value,
+        maxPrice: document.getElementById('maxPrice').value,
+        rating: document.querySelector('input[name="rating"]:checked')?.value,
+        sort: document.getElementById('sortOptions').value
+    };
+    
+    // Apply filters
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+    });
+    
+    window.location.href = `?${params.toString()}`;
+}
+
+function setView(view) {
+    const grid = document.getElementById('productGrid');
+    const buttons = document.querySelectorAll('.btn-group button');
+    
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    if (view === 'list') {
+        grid.style.gridTemplateColumns = '1fr';
+    } else {
+        grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
+    }
+}
+
+// Utility functions
+function getCheckedCategories() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showNotification(message, type) {
+    // Show notification toast
+    const toast = document.createElement('div');
+    toast.className = `toast align-items-center text-white bg-${type} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">${message}</div>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Position toast
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function updateCartCount() {
+    // Update cart count in navigation
+    fetch('/cart/count/')
+    .then(response => response.json())
+    .then(data => {
+        const badge = document.querySelector('.cart-link .badge');
+        if (badge) {
+            badge.textContent = data.count;
+        }
+    });
+}
+
+// Touch optimizations
+if ('ontouchstart' in window) {
+    document.body.classList.add('touch-device');
+}
+</script>
+{% endblock %}

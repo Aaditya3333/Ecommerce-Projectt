@@ -1,0 +1,35 @@
+services:
+  # Django Web Service
+  - type: web
+    name: aaditya-store
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn ecommerce.wsgi:application
+    healthCheckPath: /admin/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DJANGO_SETTINGS_MODULE
+        value: ecommerce.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aaditya-store-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: aaditya-store.onrender.com,localhost,127.0.0.1
+      - key: USE_POSTGRESQL
+        value: true
+
+  # PostgreSQL Database
+  - type: pserv
+    name: aaditya-store-db
+    plan: starter
+    env: postgres
+    databaseName: aaditya_store_db
+    user: postgres
+    region: oregon

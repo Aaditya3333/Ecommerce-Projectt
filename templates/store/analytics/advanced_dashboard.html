@@ -1,0 +1,449 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Advanced Analytics - Aaditya Store{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="gradient-text">
+            <i class="fas fa-chart-line"></i> Advanced Analytics Dashboard
+        </h1>
+        <div class="d-flex gap-2">
+            <select class="form-select" id="periodSelector" style="width: auto;">
+                <option value="7d">Last 7 Days</option>
+                <option value="30d" selected>Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+            </select>
+            <button class="btn btn-primary" id="exportBtn">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Real-time Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ real_time_data.today_sales }}</h4>
+                            <p class="mb-0">Today's Sales</p>
+                        </div>
+                        <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                    </div>
+                    <div class="mt-2">
+                        <small>${{ real_time_data.today_revenue|floatformat:2 }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ sales_data.total_orders }}</h4>
+                            <p class="mb-0">Total Orders</p>
+                        </div>
+                        <i class="fas fa-box fa-2x opacity-75"></i>
+                    </div>
+                    <div class="mt-2">
+                        <small>{{ sales_data.total_revenue|floatformat:2 }} Revenue</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ customer_data.total_customers }}</h4>
+                            <p class="mb-0">Customers</p>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                    <div class="mt-2">
+                        <small>{{ customer_data.average_customer_value|floatformat:2 }} Avg. Value</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-0">{{ real_time_data.conversion_rate }}%</h4>
+                            <p class="mb-0">Conversion Rate</p>
+                        </div>
+                        <i class="fas fa-percentage fa-2x opacity-75"></i>
+                    </div>
+                    <div class="mt-2">
+                        <small>{{ real_time_data.cart_abandonment_rate }}% Abandonment</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Sales Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Payment Methods</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Products</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in sales_data.top_products %}
+                                <tr>
+                                    <td>{{ product.product__name|truncatewords:3 }}</td>
+                                    <td>{{ product.total_sold }}</td>
+                                    <td>${{ product.revenue|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Low Stock Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if product_data.low_stock %}
+                        {% for product in product_data.low_stock %}
+                        <div class="alert alert-warning">
+                            <strong>{{ product.name }}</strong> - Only {{ product.stock }} left
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No low stock alerts</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Customer Segments</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="customerSegmentsChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Customers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Orders</th>
+                                    <th>Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customer_data.top_customers %}
+                                <tr>
+                                    <td>{{ customer.email|truncatewords:1 }}</td>
+                                    <td>{{ customer.order_count }}</td>
+                                    <td>${{ customer.total_spent|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Performance -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Category Performance</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Advanced Analytics Dashboard
+class AdvancedAnalytics {
+    constructor() {
+        this.charts = {};
+        this.currentPeriod = '30d';
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.loadCharts();
+        this.startRealTimeUpdates();
+    }
+
+    setupEventListeners() {
+        document.getElementById('periodSelector').addEventListener('change', (e) => {
+            this.currentPeriod = e.target.value;
+            this.refreshData();
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            this.exportData();
+        });
+    }
+
+    loadCharts() {
+        this.loadSalesChart();
+        this.loadPaymentChart();
+        this.loadCustomerSegmentsChart();
+        this.loadCategoryChart();
+    }
+
+    loadSalesChart() {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        
+        // Sample data - in production, this would come from API
+        const salesData = {
+            labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+            datasets: [{
+                label: 'Sales',
+                data: [1200, 1900, 1500, 2100, 1800, 2400, 2200],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1
+            }]
+        };
+
+        this.charts.sales = new Chart(ctx, {
+            type: 'line',
+            data: salesData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    loadPaymentChart() {
+        const ctx = document.getElementById('paymentChart').getContext('2d');
+        
+        const paymentData = {
+            labels: ['Credit Card', 'PayPal', 'Digital Wallet', 'Cash on Delivery'],
+            datasets: [{
+                data: [45, 25, 20, 10],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0'
+                ]
+            }]
+        };
+
+        this.charts.payment = new Chart(ctx, {
+            type: 'doughnut',
+            data: paymentData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    loadCustomerSegmentsChart() {
+        const ctx = document.getElementById('customerSegmentsChart').getContext('2d');
+        
+        const segmentsData = {
+            labels: ['VIP', 'Regular', 'New'],
+            datasets: [{
+                data: [15, 45, 40],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56'
+                ]
+            }]
+        };
+
+        this.charts.segments = new Chart(ctx, {
+            type: 'pie',
+            data: segmentsData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    loadCategoryChart() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        
+        const categoryData = {
+            labels: ['Electronics', 'Clothing', 'Books', 'Home', 'Sports'],
+            datasets: [{
+                label: 'Revenue',
+                data: [12000, 8000, 5000, 7000, 4000],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        this.charts.category = new Chart(ctx, {
+            type: 'bar',
+            data: categoryData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    refreshData() {
+        // Fetch new data based on selected period
+        fetch(`/analytics-api-data/?period=${this.currentPeriod}`)
+            .then(response => response.json())
+            .then(data => {
+                this.updateCharts(data.data);
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
+    }
+
+    updateCharts(data) {
+        // Update charts with new data
+        // This would update all chart datasets with the new data
+        console.log('Updating charts with:', data);
+    }
+
+    startRealTimeUpdates() {
+        // Update real-time metrics every 30 seconds
+        setInterval(() => {
+            this.updateRealTimeMetrics();
+        }, 30000);
+    }
+
+    updateRealTimeMetrics() {
+        // Fetch real-time metrics
+        fetch('/analytics-api-data/?type=realtime')
+            .then(response => response.json())
+            .then(data => {
+                // Update metric cards
+                this.updateMetricCards(data.data);
+            })
+            .catch(error => {
+                console.error('Error fetching real-time data:', error);
+            });
+    }
+
+    updateMetricCards(data) {
+        // Update the metric cards with new real-time data
+        console.log('Updating metrics:', data);
+    }
+
+    exportData() {
+        // Export functionality
+        const exportType = 'sales'; // Could be determined by user selection
+        fetch(`/export-analytics/?type=${exportType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Export error:', error);
+            });
+    }
+}
+
+// Initialize analytics dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    new AdvancedAnalytics();
+});
+</script>
+{% endblock %}

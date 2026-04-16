@@ -1,0 +1,240 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Payment - Order #{{ order.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-credit-card"></i> Payment for Order #{{ order.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Order Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Order Summary</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Quantity</th>
+                                            <th>Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order.items.all %}
+                                        <tr>
+                                            <td>{{ item.product.name }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>${{ item.price }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="2">Total:</th>
+                                            <th>${{ order.get_total }}</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Shipping Information</h5>
+                            <p>
+                                <strong>{{ order.first_name }} {{ order.last_name }}</strong><br>
+                                {{ order.address }}<br>
+                                {{ order.city }}, {{ order.postal_code }}<br>
+                                {{ order.country }}<br>
+                                <strong>Phone:</strong> {{ order.phone }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="payment-methods">
+                        <h5>Select Payment Method</h5>
+                        
+                        <!-- Stripe Payment -->
+                        <div class="payment-option mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="stripe" value="stripe" checked>
+                                        <label class="form-check-label" for="stripe">
+                                            <i class="fab fa-cc-stripe text-primary"></i> Credit/Debit Card (Stripe)
+                                        </label>
+                                    </div>
+                                    <div id="stripe-payment" class="payment-form mt-3">
+                                        <form id="payment-form">
+                                            <div id="card-element">
+                                                <!-- Stripe Elements will be inserted here -->
+                                            </div>
+                                            <button id="submit-button" class="btn btn-primary mt-3">
+                                                <span id="button-text">Pay ${{ order.get_total }}</span>
+                                            </button>
+                                            <div id="payment-message" class="mt-2"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PayPal -->
+                        <div class="payment-option mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="paypal" value="paypal">
+                                        <label class="form-check-label" for="paypal">
+                                            <i class="fab fa-paypal text-blue"></i> PayPal
+                                        </label>
+                                    </div>
+                                    <div id="paypal-payment" class="payment-form mt-3" style="display: none;">
+                                        <a href="{% url 'paypal_payment' order.id %}" class="btn btn-warning">
+                                            <i class="fab fa-paypal"></i> Pay with PayPal
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Digital Wallets -->
+                        <div class="payment-option mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="wallet" value="wallet">
+                                        <label class="form-check-label" for="wallet">
+                                            <i class="fab fa-apple-pay"></i> <i class="fab fa-google-pay"></i> Digital Wallet
+                                        </label>
+                                    </div>
+                                    <div id="wallet-payment" class="payment-form mt-3" style="display: none;">
+                                        <a href="{% url 'digital_wallet_payment' order.id %}" class="btn btn-dark">
+                                            <i class="fas fa-mobile-alt"></i> Pay with Digital Wallet
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cash on Delivery -->
+                        <div class="payment-option mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod">
+                                        <label class="form-check-label" for="cod">
+                                            <i class="fas fa-money-bill-wave text-success"></i> Cash on Delivery
+                                        </label>
+                                    </div>
+                                    <div id="cod-payment" class="payment-form mt-3" style="display: none;">
+                                        <a href="{% url 'order_confirmation' order.id %}" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Confirm Order (Cash on Delivery)
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{% url 'cart_detail' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Cart
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+const stripe = Stripe('{{ stripe_publishable_key }}');
+const elements = stripe.elements();
+
+// Create card element
+const cardElement = elements.create('card', {
+    style: {
+        base: {
+            fontSize: '16px',
+            color: '#424770',
+            '::placeholder': {
+                color: '#aab7c4',
+            },
+        },
+    },
+});
+
+cardElement.mount('#card-element');
+
+// Handle form submission
+const form = document.getElementById('payment-form');
+const submitButton = document.getElementById('submit-button');
+const buttonText = document.getElementById('button-text');
+const paymentMessage = document.getElementById('payment-message');
+
+form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    
+    if (!form.checkValidity()) {
+        return;
+    }
+    
+    setLoading(true);
+    
+    const { error, paymentIntent } = await stripe.confirmCardPayment(
+        '{{ client_secret }}',
+        {
+            payment_method: {
+                card: cardElement,
+            },
+        }
+    );
+    
+    setLoading(false);
+    
+    if (error) {
+        showMessage(error.message);
+    } else if (paymentIntent.status === 'succeeded') {
+        showMessage('Payment successful! Redirecting...', 'success');
+        setTimeout(() => {
+            window.location.href = `/payment-success/{{ order.id }}/`;
+        }, 2000);
+    }
+});
+
+function setLoading(isLoading) {
+    if (isLoading) {
+        submitButton.disabled = true;
+        buttonText.textContent = 'Processing...';
+    } else {
+        submitButton.disabled = false;
+        buttonText.textContent = `Pay ${{ order.get_total }}`;
+    }
+}
+
+function showMessage(message, type = 'error') {
+    paymentMessage.textContent = message;
+    paymentMessage.className = type === 'error' ? 'text-danger' : 'text-success';
+}
+
+// Payment method selection
+document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.payment-form').forEach(form => {
+            form.style.display = 'none';
+        });
+        
+        const selectedForm = document.getElementById(this.value + '-payment');
+        if (selectedForm) {
+            selectedForm.style.display = 'block';
+        }
+    });
+});
+</script>
+{% endblock %}

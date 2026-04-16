@@ -1,0 +1,363 @@
+{% extends 'base/base.html' %}
+{% load review_filters %}
+
+{% block title %}Shopping - E-Commerce Store{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="display-4 mb-4 animate__animated animate__fadeInLeft">Shop All Products</h1>
+                <p class="lead mb-4 animate__animated animate__fadeInLeft animate__delay-1s">
+                    Discover amazing products with advanced filters and comparison tools.
+                </p>
+                <div class="animate__animated animate__fadeInLeft animate__delay-2s">
+                    <a href="#products" class="btn btn-light btn-lg me-3">Browse Products</a>
+                    <a href="{% url 'search' %}" class="btn btn-outline-light btn-lg">Advanced Search</a>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="text-center floating">
+                    <i class="fas fa-concierge-bell fa-10x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="full-width-section py-5">
+    <div class="container-fluid">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="gradient-text">What We Offer</h2>
+            <p class="lead">Comprehensive services to enhance your shopping experience</p>
+        </div>
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shopping-bag feature-icon mb-3"></i>
+                        <h4>Wide Product Selection</h4>
+                        <p>Access to thousands of products across multiple categories including electronics, fashion, books, and home essentials.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shipping-fast feature-icon mb-3"></i>
+                        <h4>Fast & Reliable Delivery</h4>
+                        <p>Quick delivery services with real-time tracking. Get your orders delivered right to your doorstep.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shield-alt feature-icon mb-3"></i>
+                        <h4>Secure Payments</h4>
+                        <p>Multiple secure payment options including credit cards, digital wallets, and cash on delivery.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="400">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-undo feature-icon mb-3"></i>
+                        <h4>Easy Returns</h4>
+                        <p>Hassle-free return policy within 30 days. Not satisfied? Return your products easily.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="500">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-headset feature-icon mb-3"></i>
+                        <h4>24/7 Customer Support</h4>
+                        <p>Round-the-clock customer service to help you with any queries or issues.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="600">
+                <div class="card h-100 card-hover">
+                    <div class="card-body text-center">
+                        <i class="fas fa-percentage feature-icon mb-3"></i>
+                        <h4>Best Price Guarantee</h4>
+                        <p>Competitive prices with regular discounts and special offers for our valued customers.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Advanced Filters Section -->
+<section id="products" class="full-width-section py-5">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Filters Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-filter"></i> Advanced Filters</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="get" id="filter-form">
+                            <!-- Search -->
+                            <div class="mb-3">
+                                <label for="q" class="form-label">Search Products</label>
+                                <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Search...">
+                            </div>
+                            
+                            <!-- Category Filter -->
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">All Categories</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Price Range -->
+                            <div class="mb-3">
+                                <label class="form-label">Price Range</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <input type="number" class="form-control" name="min_price" placeholder="Min" value="{{ min_price }}">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="number" class="form-control" name="max_price" placeholder="Max" value="{{ max_price }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sort By -->
+                            <div class="mb-3">
+                                <label for="sort" class="form-label">Sort By</label>
+                                <select class="form-select" id="sort" name="sort">
+                                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                                    <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                    <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name: A to Z</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search"></i> Apply Filters
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products Grid -->
+            <div class="col-md-9">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>All Products</h3>
+                    <span class="text-muted">{{ total_products }} products found</span>
+                </div>
+                
+                {% if page_obj %}
+                    <div class="row">
+                        {% for product in page_obj %}
+                        <div class="col-md-4 col-sm-6 mb-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:0 }}00">
+                            <div class="card h-100 card-hover">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                        <i class="fas fa-box fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text">{{ product.description|truncatewords:10 }}</p>
+                                    
+                                    <!-- Reviews -->
+                                    <div class="mb-2">
+                                        {% with reviews=product.reviews.all %}
+                                            {% if reviews %}
+                                                {% with avg_rating=reviews|average_rating %}
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-2">
+                                                            {% for i in "12345" %}
+                                                                {% if forloop.counter <= avg_rating %}
+                                                                    <i class="fas fa-star text-warning" style="font-size: 12px;"></i>
+                                                                {% else %}
+                                                                    <i class="far fa-star text-warning" style="font-size: 12px;"></i>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        </div>
+                                                        <small class="text-muted">({{ avg_rating|floatformat:1 }})</small>
+                                                    </div>
+                                                {% endwith %}
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                    
+                                    <div class="mt-auto">
+                                        <h4 class="text-primary">${{ product.price }}</h4>
+                                        {% if product.available %}
+                                            <div class="d-grid gap-2">
+                                                <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </a>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'cart_add' product.id %}" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-cart-plus"></i> Add to Cart
+                                                    </a>
+                                                    <button class="btn btn-outline-secondary btn-sm" onclick="addToComparison({{ product.id }})">
+                                                        <i class="fas fa-balance-scale"></i> Compare
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}&q={{ search_query }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}&q={{ search_query }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort_by }}&q={{ search_query }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h4>No products found</h4>
+                        <p class="text-muted">Try adjusting your filters</p>
+                        <a href="{% url 'services' %}" class="btn btn-primary">Clear Filters</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Process Section -->
+<section class="full-width-section py-5 bg-light">
+    <div class="container-fluid">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="gradient-text">How It Works</h2>
+            <p class="lead">Simple steps to start shopping with us</p>
+        </div>
+        <div class="row">
+            <div class="col-md-3 mb-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-search fa-2x"></i>
+                        </div>
+                    </div>
+                    <h5>1. Browse Products</h5>
+                    <p>Explore our wide range of products across different categories.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                    <h5>2. Add to Cart</h5>
+                    <p>Select your favorite products and add them to your shopping cart.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4" data-aos="zoom-in" data-aos-delay="300">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-credit-card fa-2x"></i>
+                        </div>
+                    </div>
+                    <h5>3. Secure Checkout</h5>
+                    <p>Complete your purchase using our secure payment system.</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4" data-aos="zoom-in" data-aos-delay="400">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-truck fa-2x"></i>
+                        </div>
+                    </div>
+                    <h5>4. Fast Delivery</h5>
+                    <p>Receive your products at your doorstep with real-time tracking.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="full-width-section py-5">
+    <div class="container-fluid">
+        <div class="text-center" data-aos="fade-up">
+            <h2 class="gradient-text mb-4">Ready to Start Shopping?</h2>
+            <p class="lead mb-4">Join thousands of satisfied customers today!</p>
+            <a href="{% url 'home' %}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-shopping-bag"></i> Shop Now
+            </a>
+            {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<script>
+function addToComparison(productId) {
+    fetch(`/add-to-comparison/?product_id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Product added to comparison!');
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+</script>
+{% endblock %}

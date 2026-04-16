@@ -1,0 +1,201 @@
+{% extends 'base/base.html' %}
+{% load review_filters %}
+
+{% block title %}Product Comparison - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-balance-scale"></i> Product Comparison</h2>
+        <div>
+            <button class="btn btn-outline-danger" onclick="clearComparison()">
+                <i class="fas fa-trash"></i> Clear All
+            </button>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered comparison-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%;">Features</th>
+                    {% for product in products %}
+                    <th style="width: 20%;">
+                        <div class="text-center">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid mb-2" style="max-height: 150px;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center mb-2" style="height: 150px;">
+                                    <i class="fas fa-box fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            <h6>{{ product.name }}</h6>
+                            <h4 class="text-primary">${{ product.price }}</h4>
+                            <div class="mt-2">
+                                <a href="{% url 'product_detail' product.pk %}" class="btn btn-sm btn-outline-primary">View Details</a>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeFromComparison({{ product.id }})">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Price -->
+                <tr>
+                    <td><strong>Price</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">
+                        <h5 class="text-primary">${{ product.price }}</h5>
+                    </td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Category -->
+                <tr>
+                    <td><strong>Category</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">{{ product.category.name }}</td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Availability -->
+                <tr>
+                    <td><strong>Availability</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">
+                        {% if product.available %}
+                            <span class="badge bg-success">In Stock</span>
+                            <small class="text-muted">({{ product.stock }} available)</small>
+                        {% else %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Rating -->
+                <tr>
+                    <td><strong>Customer Rating</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">
+                        {% with reviews=product.reviews.all %}
+                            {% if reviews %}
+                                {% with avg_rating=reviews|average_rating %}
+                                    <div>
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= avg_rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    <small class="text-muted">{{ avg_rating|floatformat:1 }} ({{ reviews|length }} reviews)</small>
+                                {% endwith %}
+                            {% else %}
+                                <small class="text-muted">No reviews yet</small>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Description -->
+                <tr>
+                    <td><strong>Description</strong></td>
+                    {% for product in products %}
+                    <td>{{ product.description|truncatewords:20 }}</td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Stock -->
+                <tr>
+                    <td><strong>Stock Quantity</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">{{ product.stock }}</td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Created Date -->
+                <tr>
+                    <td><strong>Added On</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">{{ product.created|date:"M d, Y" }}</td>
+                    {% endfor %}
+                </tr>
+                
+                <!-- Actions -->
+                <tr>
+                    <td><strong>Actions</strong></td>
+                    {% for product in products %}
+                    <td class="text-center">
+                        {% if product.available %}
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'cart_add' product.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </a>
+                                <a href="{% url 'add_review' product.pk %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-star"></i> Write Review
+                                </a>
+                            </div>
+                        {% else %}
+                            <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="text-center mt-4">
+        <a href="{% url 'home' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Continue Shopping
+        </a>
+    </div>
+</div>
+
+<script>
+function removeFromComparison(productId) {
+    fetch(`/remove-from-comparison/?product_id=${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+}
+
+function clearComparison() {
+    if (confirm('Are you sure you want to clear all products from comparison?')) {
+        fetch('/clear-comparison/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+    }
+}
+</script>
+
+<style>
+.comparison-table th,
+.comparison-table td {
+    vertical-align: middle;
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+    font-weight: bold;
+    background-color: #f8f9fa;
+}
+
+.comparison-table img {
+    border-radius: 8px;
+}
+</style>
+{% endblock %}

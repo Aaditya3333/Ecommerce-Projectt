@@ -1,0 +1,18 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Logged Out - E-Commerce Store{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h3>You have been logged out successfully.</h3>
+                <p>Thank you for visiting our store!</p>
+                <a href="{% url 'login' %}" class="btn btn-primary">Login Again</a>
+                <a href="{% url 'home' %}" class="btn btn-secondary">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

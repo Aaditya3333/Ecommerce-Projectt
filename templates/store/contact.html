@@ -1,0 +1,202 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Contact Us - E-Commerce Store{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section text-white">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h1 class="display-4 mb-4 animate__animated animate__fadeInLeft">Contact Us</h1>
+                <p class="lead mb-4 animate__animated animate__fadeInLeft animate__delay-1s">
+                    We're here to help! Get in touch with our team for any questions or support.
+                </p>
+                <div class="animate__animated animate__fadeInLeft animate__delay-2s">
+                    <a href="#contact-form" class="btn btn-light btn-lg me-3">Send Message</a>
+                    <a href="tel:+1234567890" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-phone"></i> Call Us
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="text-center floating">
+                    <i class="fas fa-envelope fa-10x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Info Section -->
+<section class="full-width-section py-5">
+    <div class="container-fluid">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="gradient-text">Get in Touch</h2>
+            <p class="lead">We're available 24/7 to assist you</p>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card text-center card-hover h-100">
+                    <div class="card-body">
+                        <i class="fas fa-map-marker-alt feature-icon mb-3"></i>
+                        <h4>Visit Us</h4>
+                        <p>123 Shopping Street<br>Commerce City, CC 12345<br>United States</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card text-center card-hover h-100">
+                    <div class="card-body">
+                        <i class="fas fa-phone feature-icon mb-3"></i>
+                        <h4>Call Us</h4>
+                        <p>Phone: +1 (234) 567-8900<br>Mobile: +1 (234) 567-8901<br>24/7 Support Available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card text-center card-hover h-100">
+                    <div class="card-body">
+                        <i class="fas fa-envelope feature-icon mb-3"></i>
+                        <h4>Email Us</h4>
+                        <p>General: info@ecommerce.com<br>Support: support@ecommerce.com<br>Sales: sales@ecommerce.com</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Form Section -->
+<section id="contact-form" class="full-width-section py-5 bg-light">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h2 class="gradient-text mb-4">Send Us a Message</h2>
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="subject" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-paper-plane"></i> Send Message
+                    </button>
+                </form>
+            </div>
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="card shadow-lg">
+                    <div class="card-body p-4">
+                        <h4 class="mb-4">Business Hours</h4>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Monday - Friday:</span>
+                                <strong>9:00 AM - 8:00 PM</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Saturday:</span>
+                                <strong>10:00 AM - 6:00 PM</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Sunday:</span>
+                                <strong>11:00 AM - 5:00 PM</strong>
+                            </div>
+                        </div>
+                        <hr>
+                        <h5 class="mb-3">Follow Us</h5>
+                        <div class="d-flex gap-3">
+                            <a href="#" class="btn btn-primary btn-sm">
+                                <i class="fab fa-facebook"></i> Facebook
+                            </a>
+                            <a href="#" class="btn btn-info btn-sm">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="#" class="btn btn-danger btn-sm">
+                                <i class="fab fa-instagram"></i> Instagram
+                            </a>
+                            <a href="#" class="btn btn-success btn-sm">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="full-width-section py-5">
+    <div class="container-fluid">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="gradient-text">Frequently Asked Questions</h2>
+            <p class="lead">Quick answers to common questions</p>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 mx-auto" data-aos="fade-up">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading1">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                What payment methods do you accept?
+                            </button>
+                        </h2>
+                        <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                We accept all major credit cards, debit cards, PayPal, Apple Pay, Google Pay, and cash on delivery for eligible orders.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading2">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                How long does delivery take?
+                            </button>
+                        </h2>
+                        <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Standard delivery takes 3-5 business days, express delivery takes 1-2 business days, and same-day delivery is available for select locations.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading3">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                What is your return policy?
+                            </button>
+                        </h2>
+                        <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                We offer a 30-day return policy for most items. Products must be unused and in original packaging. Some restrictions apply.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading4">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                Do you offer international shipping?
+                            </button>
+                        </h2>
+                        <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, we ship to over 100 countries worldwide. International shipping rates and delivery times vary by destination.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
