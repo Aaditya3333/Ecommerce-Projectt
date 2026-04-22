@@ -42,9 +42,24 @@
                         <i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span>
                     </div>
 
+                    <!-- Text Search Fallback -->
+                    <div class="text-search-fallback mb-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="textSearchInput" placeholder="Or type your search here...">
+                            <button class="btn btn-primary" id="textSearchBtn">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Status Indicator -->
                     <div id="statusIndicator" class="alert alert-info">
                         <i class="fas fa-info-circle"></i> <span id="statusText">Initializing voice search...</span>
+                    </div>
+
+                    <!-- Debug Info (hidden by default, shown if issues) -->
+                    <div id="debugInfo" class="alert alert-secondary small" style="display: none;">
+                        <strong>Debug:</strong> <span id="debugText"></span>
                     </div>
 
                     <!-- Voice Commands Help -->
@@ -87,8 +102,16 @@ function checkVoiceSupport() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-        document.getElementById('statusText').textContent = '❌ Voice search requires Chrome, Edge, or Safari. Use text search below.';
-        document.getElementById('statusIndicator').className = 'alert alert-warning';
+        const statusText = document.getElementById('statusText');
+        const statusIndicator = document.getElementById('statusIndicator');
+        if (statusText && statusIndicator) {
+            statusText.textContent = '❌ Voice search requires Chrome, Edge, or Safari. Use text search below.';
+            statusIndicator.className = 'alert alert-warning';
+        }
+        // Show debug info
+        if (window.showDebug) {
+            window.showDebug('SpeechRecognition not supported in this browser. User Agent: ' + navigator.userAgent);
+        }
         return false;
     }
     
@@ -277,6 +300,9 @@ function showError(msg) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== Voice Search Page Loaded ===');
     console.log('Browser:', navigator.userAgent);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('webkitSpeechRecognition available:', 'webkitSpeechRecognition' in window);
+    console.log('SpeechRecognition available:', 'SpeechRecognition' in window);
     
     // Initialize voice
     initVoice();
@@ -290,10 +316,48 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('🎤 Microphone clicked!');
             toggleVoice();
         });
-        console.log('✅ Click handler attached');
+        console.log('✅ Click handler attached to microphone');
     } else {
         console.error('❌ Microphone element not found');
     }
+    
+    // Attach text search handlers
+    const textInput = document.getElementById('textSearchInput');
+    const textBtn = document.getElementById('textSearchBtn');
+    
+    if (textBtn) {
+        textBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const query = textInput.value.trim();
+            if (query) {
+                console.log('Text search:', query);
+                doSearch(query);
+            }
+        });
+    }
+    
+    if (textInput) {
+        textInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = textInput.value.trim();
+                if (query) {
+                    console.log('Text search (Enter):', query);
+                    doSearch(query);
+                }
+            }
+        });
+    }
+    
+    // Show debug info if there are issues
+    window.showDebug = function(msg) {
+        const debugDiv = document.getElementById('debugInfo');
+        const debugText = document.getElementById('debugText');
+        if (debugDiv && debugText) {
+            debugText.textContent = msg;
+            debugDiv.style.display = 'block';
+        }
+    };
 });
 </script>
 
@@ -380,6 +444,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .voice-commands-help ul li i {
     margin-right: 8px;
+}
+
+.text-search-fallback {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.text-search-fallback .form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    border-color: #667eea;
+}
+
+#debugInfo {
+    font-family: monospace;
+    word-break: break-all;
 }
 </style>
 {% endblock %}
