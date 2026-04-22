@@ -1,0 +1,70 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Request Return - Aaditya Store{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-undo"></i> Request Return - Order #{{ order.id }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Please provide a reason for your return request. Our team will review and process your request within 24-48 hours.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Order Details:</h6>
+                            <p class="mb-1"><strong>Order ID:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Delivered Date:</strong> {{ order.updated|date:"M d, Y" }}</p>
+                            <p class="mb-1"><strong>Total:</strong> NPR {{ order.get_total }}</p>
+                            <p class="mb-0"><strong>Items:</strong></p>
+                            <ul class="list-unstyled ms-3">
+                                {% for item in order.items.all %}
+                                    <li><small>{{ item.quantity }}× {{ item.product.name }}</small></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Return Reason <span class="text-danger">*</span></label>
+                                <select name="return_reason" class="form-select" required>
+                                    <option value="">Select a reason</option>
+                                    <option value="defective">Product is defective or damaged</option>
+                                    <option value="wrong_item">Received wrong item</option>
+                                    <option value="not_as_described">Product not as described</option>
+                                    <option value="changed_mind">Changed my mind</option>
+                                    <option value="quality">Poor quality</option>
+                                    <option value="other">Other reason</option>
+                                </select>
+                            </div>
+                            
+                            <div class="alert alert-warning">
+                                <small>
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Returns are subject to our return policy. Products must be unused and in original packaging.
+                                </small>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-paper-plane"></i> Submit Return Request
+                                </button>
+                                <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Order
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

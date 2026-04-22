@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -11,6 +11,14 @@ import re
 def voice_search_page(request):
     """Voice search page with microphone interface"""
     return render(request, 'store/voice/voice_search.html')
+
+def test_voice_page(request):
+    """Simple test page for voice search debugging"""
+    return render(request, 'store/voice/test_voice.html')
+
+def voice_commands_page(request):
+    """Voice commands page with interface for voice shopping commands"""
+    return render(request, 'store/voice/voice_commands.html')
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -119,8 +127,8 @@ def enhance_voice_search_results(products, query):
     # Quality-related queries
     elif any(word in query_lower for word in ['best', 'top', 'highest rated', 'popular']):
         products = products.annotate(
-            avg_rating=models.Avg('review__rating'),
-            review_count=models.Count('review')
+            avg_rating=Avg('review__rating'),
+            review_count=Count('review')
         ).order_by('-avg_rating', '-review_count')
     
     # New products

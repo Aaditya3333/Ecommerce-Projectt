@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Category, Product, Review, Order, OrderItem, Wishlist, Newsletter
+from .models import (
+    Category, Product, Review, Order, OrderItem, Wishlist, Newsletter, 
+    ContactMessage, OrderStatusHistory, UserAddress, RecentlyViewed,
+    Coupon, CouponUsage, StockAlert, BackInStockNotification, AbandonedCart
+)
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -79,3 +83,78 @@ class NewsletterAdmin(admin.ModelAdmin):
     ordering = ['-created']
     list_per_page = 20
     list_editable = ['is_active']
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ['name', 'email', 'subject', 'created', 'is_read']
+    list_filter = ['is_read', 'created']
+    search_fields = ['name', 'email', 'subject', 'message']
+    ordering = ['-created']
+    list_per_page = 20
+    list_editable = ['is_read']
+    readonly_fields = ['created']
+
+@admin.register(OrderStatusHistory)
+class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    list_display = ['order', 'status', 'changed_at', 'changed_by']
+    list_filter = ['status', 'changed_at']
+    search_fields = ['order__id', 'notes']
+    ordering = ['-changed_at']
+    list_per_page = 20
+
+@admin.register(UserAddress)
+class UserAddressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'name', 'recipient_name', 'city', 'is_default', 'created']
+    list_filter = ['is_default', 'city', 'country']
+    search_fields = ['user__username', 'name', 'recipient_name', 'address']
+    ordering = ['-is_default', '-created']
+    list_per_page = 20
+
+@admin.register(RecentlyViewed)
+class RecentlyViewedAdmin(admin.ModelAdmin):
+    list_display = ['user', 'product', 'viewed_at']
+    list_filter = ['viewed_at']
+    search_fields = ['user__username', 'product__name']
+    ordering = ['-viewed_at']
+    list_per_page = 20
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'discount_type', 'discount_value', 'is_active', 'usage_count', 'created']
+    list_filter = ['discount_type', 'is_active', 'created']
+    search_fields = ['code', 'name', 'description']
+    ordering = ['-created']
+    list_per_page = 20
+    filter_horizontal = ['applicable_products', 'applicable_categories']
+
+@admin.register(CouponUsage)
+class CouponUsageAdmin(admin.ModelAdmin):
+    list_display = ['coupon', 'user', 'order', 'discount_amount', 'used_at']
+    list_filter = ['used_at']
+    search_fields = ['coupon__code', 'user__username']
+    ordering = ['-used_at']
+    list_per_page = 20
+
+@admin.register(StockAlert)
+class StockAlertAdmin(admin.ModelAdmin):
+    list_display = ['product', 'threshold', 'alert_sent', 'last_alert_sent', 'is_active']
+    list_filter = ['is_active', 'alert_sent', 'created']
+    search_fields = ['product__name']
+    ordering = ['-created']
+    list_per_page = 20
+
+@admin.register(BackInStockNotification)
+class BackInStockNotificationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'product', 'email', 'is_notified', 'created']
+    list_filter = ['is_notified', 'created']
+    search_fields = ['user__username', 'product__name', 'email']
+    ordering = ['-created']
+    list_per_page = 20
+
+@admin.register(AbandonedCart)
+class AbandonedCartAdmin(admin.ModelAdmin):
+    list_display = ['user', 'total', 'reminder_sent', 'converted', 'updated']
+    list_filter = ['reminder_sent', 'converted', 'created']
+    search_fields = ['user__username']
+    ordering = ['-updated']
+    list_per_page = 20

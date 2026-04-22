@@ -1,0 +1,50 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Cancel Order - Aaditya Store{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0"><i class="fas fa-times-circle"></i> Cancel Order #{{ order.id }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            Are you sure you want to cancel this order? This action cannot be undone.
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Order Summary:</h6>
+                            <p class="mb-1"><strong>Order ID:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ order.created|date:"M d, Y" }}</p>
+                            <p class="mb-1"><strong>Total:</strong> NPR {{ order.get_total }}</p>
+                            <p class="mb-0"><strong>Items:</strong> {{ order.items.count }}</p>
+                        </div>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Cancellation Reason (Optional)</label>
+                                <textarea name="cancellation_reason" class="form-control" rows="3" placeholder="Tell us why you're cancelling this order..."></textarea>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Confirm Cancellation
+                                </button>
+                                <a href="{% url 'order_detail' order.id %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left"></i> Back to Order
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

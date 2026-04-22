@@ -1,61 +1,245 @@
 {% extends 'store/admin/base.html' %}
 
 {% block admin_content %}
-<div class="card">
-    <div class="card-header">
-        <h3>Admin Dashboard</h3>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h4 class="text-primary">{{ categories.count }}</h4>
-                        <p class="card-text">Categories</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h4 class="text-success">{{ products.count }}</h4>
-                        <p class="card-text">Products</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h4 class="text-info">{{ in_stock_count }}</h4>
-                        <p class="card-text">In Stock</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-center">
-                    <div class="card-body">
-                        <h4 class="text-warning">{{ out_of_stock_count }}</h4>
-                        <p class="card-text">Out of Stock</p>
+<div class="container-fluid">
+    <h2 class="mb-4"><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h2>
+    
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">${{ total_revenue|floatformat:2 }}</div>
+                            <small class="text-success">+${{ recent_revenue|floatformat:2 }} this week</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="mt-4">
-            <h5>Quick Actions</h5>
-            <div class="row">
-                <div class="col-md-6">
-                    <a href="{% url 'admin_create_category' %}" class="btn btn-primary btn-block mb-2">
-                        <i class="fas fa-plus"></i> Add Category
-                    </a>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Orders</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_orders }}</div>
+                            <small class="text-warning">{{ pending_orders }} pending</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <a href="{% url 'admin_create_product' %}" class="btn btn-success btn-block mb-2">
-                        <i class="fas fa-plus"></i> Add Product
-                    </a>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Products</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ products.count }}</div>
+                            <small class="text-info">{{ in_stock_count }} in stock</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Users</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_users }}</div>
+                            <small class="text-success">+{{ new_users }} this week</small>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts & Data Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Sales Overview (Last 30 Days)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Selling Products</h6>
+                </div>
+                <div class="card-body">
+                    {% if top_products %}
+                        <div class="list-group list-group-flush">
+                            {% for product in top_products %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-truncate" style="max-width: 200px;">{{ product.name }}</span>
+                                    <span class="badge badge-primary badge-pill">{{ product.sold_count|default:0 }} sold</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No sales data yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Stats Row -->
+    <div class="row mb-4">
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">Low Stock Alert</h6>
+                </div>
+                <div class="card-body">
+                    {% if low_stock %}
+                        <div class="list-group list-group-flush">
+                            {% for product in low_stock %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span class="text-truncate" style="max-width: 200px;">{{ product.name }}</span>
+                                    <span class="badge badge-{% if product.stock == 0 %}danger{% else %}warning{% endif %} badge-pill">{{ product.stock }} left</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-success"><i class="fas fa-check"></i> All products well stocked!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">Review Stats</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="h2 mb-2">{{ avg_rating }} <i class="fas fa-star text-warning"></i></div>
+                    <p class="text-muted">Average Rating</p>
+                    <div class="h4">{{ total_reviews }}</div>
+                    <p class="text-muted">Total Reviews</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">Notifications</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'contact' %}" class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-envelope"></i> Unread Messages</span>
+                            <span class="badge badge-danger badge-pill">{{ unread_messages }}</span>
+                        </a>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-newspaper"></i> Newsletter Subs</span>
+                            <span class="badge badge-info badge-pill">{{ newsletter_count }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-boxes"></i> Categories</span>
+                            <span class="badge badge-secondary badge-pill">{{ categories.count }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'admin_create_category' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-plus"></i> Add Category
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'admin_create_product' %}" class="btn btn-success btn-block">
+                                <i class="fas fa-plus"></i> Add Product
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'admin_export_products' %}" class="btn btn-info btn-block">
+                                <i class="fas fa-download"></i> Export Products
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{% url 'admin_import_products' %}" class="btn btn-warning btn-block">
+                                <i class="fas fa-upload"></i> Import Products
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sales Chart
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ sales_labels|safe }},
+            datasets: [{
+                label: 'Sales ($)',
+                data: {{ sales_data|safe }},
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 {% endblock %}

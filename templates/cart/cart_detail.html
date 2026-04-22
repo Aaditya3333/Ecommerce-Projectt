@@ -73,7 +73,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
                         <span>Subtotal:</span>
-                        <strong>${{ cart.get_total_price }}</strong>
+                        <strong>Rs.{{ cart.get_total_price }}</strong>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Shipping:</span>
@@ -81,7 +81,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-3">
                         <span>Total:</span>
-                        <strong>${{ cart.get_total_price }}</strong>
+                        <strong>Rs.{{ cart.get_total_price }}</strong>
                     </div>
                     <div class="d-grid gap-2">
                         <a href="{% url 'checkout' %}" class="btn btn-success">

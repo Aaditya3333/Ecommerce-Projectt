@@ -1,0 +1,147 @@
+{% extends 'base/base.html' %}
+
+{% block title %}My Dashboard - Aaditya Store{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="gradient-text mb-4">Welcome, {{ user.username }}!</h2>
+        
+        <!-- Stats Cards -->
+        <div class="row mb-5">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shopping-bag fa-2x mb-2"></i>
+                        <h3>{{ total_orders }}</h3>
+                        <p class="mb-0">Total Orders</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-heart fa-2x mb-2"></i>
+                        <h3>{{ wishlist_count }}</h3>
+                        <p class="mb-0">Wishlist Items</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
+                        <h3>{{ address_count }}</h3>
+                        <p class="mb-0">Saved Addresses</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-eye fa-2x mb-2"></i>
+                        <h3>{{ recently_viewed_count }}</h3>
+                        <p class="mb-0">Recently Viewed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Recent Orders -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Recent Orders</h5>
+                        <a href="{% url 'order_list' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_orders %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in recent_orders %}
+                                        <tr>
+                                            <td>#{{ order.id }}</td>
+                                            <td>{{ order.created|date:"M d, Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'cancelled' %}danger{% else %}warning{% endif %}">
+                                                    {{ order.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>NPR {{ order.get_total }}</td>
+                                            <td>
+                                                <a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No orders yet. <a href="{% url 'home' %}">Start shopping!</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Links -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-link"></i> Quick Links</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            <a href="{% url 'profile' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-user"></i> My Profile
+                            </a>
+                            <a href="{% url 'order_list' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-shopping-bag"></i> My Orders
+                            </a>
+                            <a href="{% url 'wishlist' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-heart"></i> My Wishlist
+                            </a>
+                            <a href="{% url 'address_list' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-map-marker-alt"></i> Address Book
+                            </a>
+                            <a href="{% url 'recently_viewed' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-eye"></i> Recently Viewed
+                            </a>
+                            <a href="{% url 'change_password' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-lock"></i> Change Password
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Available Coupons -->
+                {% if active_coupons %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-ticket-alt"></i> Available Coupons</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for coupon in active_coupons|slice:":3" %}
+                            <div class="alert alert-success">
+                                <strong>{{ coupon.code }}</strong> - {{ coupon.name }}
+                                <br><small>{{ coupon.description }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -171,6 +171,20 @@
             background-color: rgba(255, 255, 255, 0.2);
             border-color: rgba(255, 255, 255, 0.8);
         }
+        .hero-learn-more {
+            border-radius: 999px;
+            border-width: 2px;
+            padding: 0.75rem 1.5rem;
+            letter-spacing: 0.2px;
+            transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .hero-learn-more:hover,
+        .hero-learn-more:focus {
+            background-color: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.95);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
         .hero-section {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -878,13 +892,11 @@
                             </a></li>
                         </ul>
                     </li>
-                    {% if user.is_authenticated %}
                     <li class="nav-item">
                         <button class="btn btn-link nav-link" id="darkModeToggle" title="Toggle Dark Mode">
                             <i class="fas fa-moon" id="darkModeIcon"></i>
                         </button>
                     </li>
-                    {% endif %}
                 </ul>
                 <form class="d-flex me-3" action="{% url 'search' %}" method="get">
                     <input class="form-control me-2" type="search" name="q" placeholder="Search products..." aria-label="Search">

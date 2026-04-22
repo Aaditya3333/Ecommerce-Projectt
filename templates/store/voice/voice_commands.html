@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Commands - Aaditya Store</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; text-align: center; max-width: 800px; margin: 0 auto; }
+        h1 { color: #333; }
+        #micButton { 
+            width: 120px; 
+            height: 120px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 48px;
+            cursor: pointer;
+            margin: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        #micButton:hover { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+        #micButton.listening {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        #status { margin: 20px; padding: 15px; border-radius: 5px; font-size: 16px; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        #result { margin: 20px; padding: 20px; border-radius: 5px; background: #f8f9fa; min-height: 100px; }
+        .commands-list {
+            text-align: left;
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .commands-list h3 { margin-top: 0; }
+        .commands-list ul { margin: 10px 0; }
+        .commands-list li { margin: 5px 0; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>🎤 Voice Commands</h1>
+    <p>Use your voice to control the store!</p>
+    
+    <div class="commands-list">
+        <h3>Available Commands:</h3>
+        <ul>
+            <li><strong>"Add to cart [product name]"</strong> - Add a product to cart</li>
+            <li><strong>"Show wishlist"</strong> or <strong>"View wishlist"</strong> - Go to your wishlist</li>
+            <li><strong>"Checkout"</strong> or <strong>"Buy now"</strong> - Proceed to checkout</li>
+            <li><strong>"Home"</strong> - Go to homepage</li>
+        </ul>
+    </div>
+    
+    <div id="status" class="info">Initializing voice commands...</div>
+    <button id="micButton">🎤</button>
+    <div id="result"></div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const micButton = document.getElementById('micButton');
+        const resultDiv = document.getElementById('result');
+        let recognition = null;
+        let isListening = false;
+
+        // Check browser support
+        function checkSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = '❌ Your browser does not support voice commands. Use Chrome or Edge.';
+                micButton.disabled = true;
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize voice recognition
+        function initVoice() {
+            if (!checkSupport()) return;
+
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    console.log('Voice recognition STARTED');
+                    statusDiv.className = 'info';
+                    statusDiv.textContent = '🎤 Listening... Speak a command!';
+                    micButton.classList.add('listening');
+                    isListening = true;
+                    resultDiv.innerHTML = '';
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    console.log('Voice result:', transcript);
+                    resultDiv.innerHTML = '<strong>You said:</strong> "' + transcript + '"';
+                    
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = '✅ Processing command...';
+                    
+                    // Send command to server
+                    processCommand(transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Voice error:', event.error);
+                    statusDiv.className = 'error';
+                    let msg = 'Error: ' + event.error;
+                    if (event.error === 'not-allowed') msg = '❌ Microphone permission denied';
+                    if (event.error === 'no-speech') msg = '❌ No speech detected';
+                    statusDiv.textContent = msg;
+                    micButton.classList.remove('listening');
+                    isListening = false;
+                };
+
+                recognition.onend = function() {
+                    console.log('Voice recognition ENDED');
+                    micButton.classList.remove('listening');
+                    isListening = false;
+                    if (statusDiv.className === 'info') {
+                        statusDiv.className = 'success';
+                        statusDiv.textContent = '✅ Voice commands ready! Click the microphone to start.';
+                    }
+                };
+
+                statusDiv.className = 'success';
+                statusDiv.textContent = '✅ Voice commands ready! Click the microphone to start.';
+
+            } catch (e) {
+                console.error('Init error:', e);
+                statusDiv.className = 'error';
+                statusDiv.textContent = '❌ Failed to initialize: ' + e.message;
+            }
+        }
+
+        // Process voice command
+        function processCommand(command) {
+            fetch('/voice-commands/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+                },
+                body: JSON.stringify({ command: command })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Command result:', data);
+                if (data.success) {
+                    resultDiv.innerHTML += '<br><br><strong style="color: green;">✓ ' + data.message + '</strong>';
+                    if (data.action === 'navigate' && data.url) {
+                        setTimeout(() => {
+                            window.location.href = data.url;
+                        }, 1000);
+                    }
+                } else {
+                    resultDiv.innerHTML += '<br><br><strong style="color: red;">✗ ' + (data.error || 'Command not recognized') + '</strong>';
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML += '<br><br><strong style="color: red;">✗ Error: ' + error.message + '</strong>';
+            });
+        }
+
+        // Handle microphone click
+        micButton.addEventListener('click', function() {
+            console.log('Mic clicked, isListening:', isListening);
+            
+            if (!recognition) {
+                initVoice();
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Start error:', e);
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = '❌ Could not start: ' + e.message;
+                }
+            }
+        });
+
+        // Initialize on page load
+        initVoice();
+    </script>
+</body>
+</html>

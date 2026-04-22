@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; text-align: center; }
+        #micButton { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            margin: 20px;
+        }
+        #micButton:hover { transform: scale(1.1); }
+        #status { margin: 20px; padding: 10px; border-radius: 5px; }
+        .info { background: #d1ecf1; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        #result { margin: 20px; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <h1>Voice Search Test</h1>
+    <div id="status" class="info">Checking browser support...</div>
+    <button id="micButton">🎤</button>
+    <div id="result"></div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const micButton = document.getElementById('micButton');
+        const resultDiv = document.getElementById('result');
+        let recognition = null;
+        let isListening = false;
+
+        // Check browser support
+        function checkSupport() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                statusDiv.className = 'error';
+                statusDiv.textContent = '❌ Your browser does not support voice search. Use Chrome or Edge.';
+                micButton.disabled = true;
+                return false;
+            }
+
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                statusDiv.className = 'error';
+                statusDiv.textContent = '❌ Voice search requires HTTPS or localhost.';
+                return false;
+            }
+
+            statusDiv.className = 'success';
+            statusDiv.textContent = '✅ Voice search is supported! Click the microphone to start.';
+            return true;
+        }
+
+        // Initialize voice recognition
+        function initVoice() {
+            if (!checkSupport()) return;
+
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onstart = function() {
+                    console.log('Voice recognition STARTED');
+                    statusDiv.className = 'info';
+                    statusDiv.textContent = '🎤 Listening... Speak now!';
+                    micButton.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+                    isListening = true;
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    console.log('Voice result:', transcript);
+                    resultDiv.innerHTML = '<strong>You said:</strong> "' + transcript + '"';
+                    
+                    // Simple search - just show the query
+                    statusDiv.className = 'success';
+                    statusDiv.textContent = '✅ Voice captured! Searching for: ' + transcript;
+                    
+                    // Try to perform search
+                    performSearch(transcript);
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('Voice error:', event.error);
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = '❌ Error: ' + event.error;
+                    micButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    isListening = false;
+                };
+
+                recognition.onend = function() {
+                    console.log('Voice recognition ENDED');
+                    micButton.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    isListening = false;
+                    if (statusDiv.className === 'info') {
+                        statusDiv.className = 'success';
+                        statusDiv.textContent = '✅ Voice search is ready! Click the microphone to start.';
+                    }
+                };
+
+            } catch (e) {
+                console.error('Init error:', e);
+                statusDiv.className = 'error';
+                statusDiv.textContent = '❌ Failed to initialize: ' + e.message;
+            }
+        }
+
+        // Perform search
+        function performSearch(query) {
+            fetch('/voice-search/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search results:', data);
+                if (data.success) {
+                    resultDiv.innerHTML += '<br><br><strong>Found ' + data.total + ' products!</strong>';
+                    if (data.results.length > 0) {
+                        resultDiv.innerHTML += '<ul>';
+                        data.results.slice(0, 3).forEach(p => {
+                            resultDiv.innerHTML += '<li>' + p.name + ' - $' + p.price + '</li>';
+                        });
+                        resultDiv.innerHTML += '</ul>';
+                    }
+                } else {
+                    resultDiv.innerHTML += '<br><br>❌ Error: ' + data.error;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                resultDiv.innerHTML += '<br><br>❌ Search failed: ' + error.message;
+            });
+        }
+
+        // Handle microphone click
+        micButton.addEventListener('click', function() {
+            console.log('Mic clicked, isListening:', isListening);
+            
+            if (!recognition) {
+                initVoice();
+            }
+            
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Start error:', e);
+                    statusDiv.className = 'error';
+                    statusDiv.textContent = '❌ Could not start: ' + e.message;
+                }
+            }
+        });
+
+        // Initialize on page load
+        initVoice();
+    </script>
+</body>
+</html>

@@ -252,44 +252,87 @@ class ChatbotWidget {
     }
 
     init() {
+        console.log('🤖 ChatbotWidget initializing...');
         this.setupEventListeners();
         this.loadWidgetHistory();
+        console.log('✅ ChatbotWidget initialized');
     }
 
     setupEventListeners() {
+        console.log('🔧 Setting up event listeners...');
+        
         // Chat button
-        document.getElementById('chatButton').addEventListener('click', () => {
-            this.toggleChat();
-        });
+        const chatButton = document.getElementById('chatButton');
+        if (chatButton) {
+            chatButton.addEventListener('click', () => {
+                console.log('Chat button clicked');
+                this.toggleChat();
+            });
+        } else {
+            console.error('❌ Chat button not found');
+        }
 
         // Close/minimize buttons
-        document.getElementById('closeChat').addEventListener('click', () => {
-            this.closeChat();
-        });
+        const closeChat = document.getElementById('closeChat');
+        const minimizeChat = document.getElementById('minimizeChat');
+        
+        if (closeChat) {
+            closeChat.addEventListener('click', () => this.closeChat());
+        }
+        if (minimizeChat) {
+            minimizeChat.addEventListener('click', () => this.minimizeChat());
+        }
 
-        document.getElementById('minimizeChat').addEventListener('click', () => {
-            this.minimizeChat();
-        });
-
-        // Send message
-        document.getElementById('widgetSendBtn').addEventListener('click', () => {
-            this.sendMessage();
-        });
-
-        document.getElementById('widgetMessageInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendMessage();
-            }
-        });
-
-        // Quick actions
-        document.querySelectorAll('.quick-action').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const message = e.target.closest('.quick-action').dataset.message;
-                document.getElementById('widgetMessageInput').value = message;
+        // Send message - BUTTON
+        const sendBtn = document.getElementById('widgetSendBtn');
+        if (sendBtn) {
+            console.log('✅ Send button found');
+            sendBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🚀 Send button clicked');
                 this.sendMessage();
             });
+        } else {
+            console.error('❌ Send button not found');
+        }
+
+        // Send message - INPUT KEYPRESS
+        const input = document.getElementById('widgetMessageInput');
+        if (input) {
+            console.log('✅ Input field found');
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    console.log('⌨️ Enter key pressed in input');
+                    this.sendMessage();
+                }
+            });
+            
+            // Focus event
+            input.addEventListener('focus', () => {
+                console.log('Input focused');
+            });
+        } else {
+            console.error('❌ Input field not found');
+        }
+
+        // Quick actions
+        const quickActions = document.querySelectorAll('.quick-action');
+        console.log(`Found ${quickActions.length} quick action buttons`);
+        quickActions.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const message = e.target.closest('.quick-action').dataset.message;
+                console.log('Quick action clicked:', message);
+                const input = document.getElementById('widgetMessageInput');
+                if (input) {
+                    input.value = message;
+                    this.sendMessage();
+                }
+            });
         });
+        
+        console.log('✅ Event listeners setup complete');
     }
 
     generateSessionId() {
@@ -327,17 +370,34 @@ class ChatbotWidget {
     }
 
     sendMessage() {
+        console.log('📤 sendMessage() called');
         const input = document.getElementById('widgetMessageInput');
-        const message = input.value.trim();
         
-        if (message && !this.isTyping) {
-            this.addUserMessage(message);
-            input.value = '';
-            this.showTypingIndicator();
-            
-            // Send to chatbot API
-            this.sendToChatbot(message);
+        if (!input) {
+            console.error('❌ Input element not found in sendMessage');
+            return;
         }
+        
+        const message = input.value.trim();
+        console.log('Message content:', message);
+        
+        if (!message) {
+            console.log('⚠️ Message is empty, not sending');
+            return;
+        }
+        
+        if (this.isTyping) {
+            console.log('⏳ Already typing, please wait');
+            return;
+        }
+        
+        console.log('✅ Sending message:', message);
+        this.addUserMessage(message);
+        input.value = '';
+        this.showTypingIndicator();
+        
+        // Send to chatbot API
+        this.sendToChatbot(message);
     }
 
     addUserMessage(message) {
@@ -434,29 +494,42 @@ class ChatbotWidget {
     }
 
     sendToChatbot(message) {
+        console.log('📡 Sending to chatbot API:', message);
+        
+        const csrfToken = getCookie('csrftoken');
+        console.log('🔑 CSRF Token:', csrfToken ? 'Found' : 'Not found');
+        
         fetch('/chatbot-api/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': csrfToken
             },
             body: JSON.stringify({
                 message: message,
                 session_id: this.sessionId
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('📥 Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('📊 Response data:', data);
             this.hideTypingIndicator();
             if (data.success) {
                 this.addBotMessage(data.response);
             } else {
-                this.addBotMessage('Sorry, I encountered an error. Please try again.');
+                this.addBotMessage('Sorry, I encountered an error: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
+            console.error('❌ Fetch error:', error);
             this.hideTypingIndicator();
-            this.addBotMessage('Sorry, I\'m having trouble connecting. Please try again later.');
+            this.addBotMessage('Sorry, I\'m having trouble connecting. Error: ' + error.message);
         });
     }
 

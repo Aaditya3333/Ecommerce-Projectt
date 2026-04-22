@@ -4,6 +4,7 @@ from . import views_admin
 from . import views_checkout
 from . import views_reviews
 from . import views_search
+from . import views_notifications
 from . import views_comparison
 from . import views_recent
 from . import views_analytics
@@ -96,6 +97,8 @@ urlpatterns = [
     # Voice Search URLs
     path('voice-search/', views_voice.voice_search_api, name='voice_search_api'),
     path('voice-search-page/', views_voice.voice_search_page, name='voice_search_page'),
+    path('test-voice/', views_voice.test_voice_page, name='test_voice_page'),
+    path('voice-commands-page/', views_voice.voice_commands_page, name='voice_commands_page'),
     path('voice-suggestions/', views_voice.voice_suggestions, name='voice_suggestions'),
     path('voice-commands/', views_voice.voice_commands, name='voice_commands'),
     
@@ -160,4 +163,33 @@ urlpatterns = [
     path('admin/delete-category/<int:category_id>/', views_admin.admin_delete_category, name='admin_delete_category'),
     path('admin/edit-product/<int:product_id>/', views_admin.admin_edit_product, name='admin_edit_product'),
     path('admin/delete-product/<int:product_id>/', views_admin.admin_delete_product, name='admin_delete_product'),
+    path('admin/export-products/', views_admin.admin_export_products, name='admin_export_products'),
+    path('admin/import-products/', views_admin.admin_import_products, name='admin_import_products'),
+    
+    # Order Tracking & Management URLs
+    path('orders/', views.order_list, name='order_list'),
+    path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('orders/<int:order_id>/cancel/', views.cancel_order, name='cancel_order'),
+    path('orders/<int:order_id>/return/', views.request_return, name='request_return'),
+    path('track-order/', views.track_order, name='track_order'),
+    
+    # User Address Book URLs
+    path('addresses/', views.address_list, name='address_list'),
+    path('addresses/add/', views.add_address, name='add_address'),
+    path('addresses/<int:address_id>/edit/', views.edit_address, name='edit_address'),
+    path('addresses/<int:address_id>/delete/', views.delete_address, name='delete_address'),
+    
+    # Coupon System URLs
+    path('apply-coupon/', views.apply_coupon, name='apply_coupon'),
+    path('remove-coupon/', views.remove_coupon, name='remove_coupon'),
+    
+    # Enhanced User Dashboard
+    path('my-dashboard/', views.user_dashboard, name='user_dashboard'),
+    
+    # Notifications URLs
+    path('notifications/', views_notifications.notifications_list, name='notifications_list'),
+    path('notifications/api/', views_notifications.notifications_api, name='notifications_api'),
+    path('notifications/mark-read/<int:notification_id>/', views_notifications.mark_notification_read, name='mark_notification_read'),
+    path('notifications/mark-all-read/', views_notifications.mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('notifications/dropdown/', views_notifications.notification_dropdown, name='notification_dropdown'),
 ]

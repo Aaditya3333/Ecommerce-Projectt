@@ -42,6 +42,11 @@
                         <i class="fas fa-exclamation-triangle"></i> <span id="errorText"></span>
                     </div>
 
+                    <!-- Status Indicator -->
+                    <div id="statusIndicator" class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <span id="statusText">Initializing voice search...</span>
+                    </div>
+
                     <!-- Voice Commands Help -->
                     <div class="voice-commands-help mt-4">
                         <h5>Voice Commands You Can Use:</h5>
@@ -73,264 +78,222 @@
 
 {% block extra_js %}
 <script>
-// Voice Search Implementation
-class VoiceSearch {
-    constructor() {
-        this.recognition = null;
-        this.isListening = false;
-        this.init();
+// Simple working voice search - no complex class structure
+let recognition = null;
+let isListening = false;
+
+// Check if browser supports voice search
+function checkVoiceSupport() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+        document.getElementById('statusText').textContent = '❌ Voice search requires Chrome, Edge, or Safari. Use text search below.';
+        document.getElementById('statusIndicator').className = 'alert alert-warning';
+        return false;
     }
+    
+    return true;
+}
 
-    init() {
-        // Check for browser support
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            this.recognition = new SpeechRecognition();
-            this.setupRecognition();
-        } else {
-            this.showError('Your browser does not support voice search. Please try Chrome or Edge.');
-        }
+// Initialize voice recognition
+function initVoice() {
+    if (!checkVoiceSupport()) {
+        // Show fallback text input
+        document.getElementById('voiceSearchCircle').style.opacity = '0.5';
+        return;
     }
-
-    setupRecognition() {
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
-        this.recognition.lang = 'en-US';
-
-        this.recognition.onstart = () => {
-            this.startListening();
+    
+    try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onstart = function() {
+            console.log('🎤 Listening started');
+            isListening = true;
+            document.getElementById('voiceSearchCircle').classList.add('listening');
+            document.getElementById('micIcon').classList.remove('fa-microphone');
+            document.getElementById('micIcon').classList.add('fa-microphone-slash');
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('statusText').textContent = '🎤 Listening... Speak now!';
+            document.getElementById('statusIndicator').className = 'alert alert-info';
+            document.getElementById('errorMessage').style.display = 'none';
         };
-
-        this.recognition.onresult = (event) => {
+        
+        recognition.onresult = function(event) {
             const transcript = event.results[0][0].transcript;
-            this.handleVoiceResult(transcript);
+            console.log('✅ Heard:', transcript);
+            document.getElementById('statusText').textContent = '🔍 Searching for: "' + transcript + '"';
+            doSearch(transcript);
         };
-
-        this.recognition.onerror = (event) => {
-            this.handleError(event.error);
+        
+        recognition.onerror = function(event) {
+            console.error('❌ Voice error:', event.error);
+            let msg = 'Voice search error. Please try again.';
+            if (event.error === 'not-allowed') msg = 'Microphone permission denied. Please allow access.';
+            if (event.error === 'no-speech') msg = 'No speech detected. Please try again.';
+            showError(msg);
+            resetUI();
         };
-
-        this.recognition.onend = () => {
-            this.stopListening();
+        
+        recognition.onend = function() {
+            console.log('🛑 Listening ended');
+            resetUI();
         };
+        
+        // Show ready status
+        document.getElementById('statusText').textContent = '✅ Voice search ready! Click the microphone to start.';
+        document.getElementById('statusIndicator').className = 'alert alert-success';
+        
+    } catch (e) {
+        console.error('Init error:', e);
+        showError('Failed to initialize voice search.');
     }
+}
 
-    startListening() {
-        this.isListening = true;
-        const circle = document.getElementById('voiceSearchCircle');
-        const micIcon = document.getElementById('micIcon');
-        
-        circle.classList.add('listening');
-        micIcon.classList.remove('fa-microphone');
-        micIcon.classList.add('fa-microphone-slash');
-        
-        document.getElementById('loadingIndicator').style.display = 'block';
-        document.getElementById('searchResults').style.display = 'none';
-        document.getElementById('errorMessage').style.display = 'none';
+// Reset UI to idle state
+function resetUI() {
+    isListening = false;
+    document.getElementById('voiceSearchCircle').classList.remove('listening');
+    document.getElementById('micIcon').classList.add('fa-microphone');
+    document.getElementById('micIcon').classList.remove('fa-microphone-slash');
+    document.getElementById('loadingIndicator').style.display = 'none';
+    if (document.getElementById('statusIndicator').className === 'alert alert-info') {
+        document.getElementById('statusText').textContent = '✅ Voice search ready! Click the microphone to start.';
+        document.getElementById('statusIndicator').className = 'alert alert-success';
     }
+}
 
-    stopListening() {
-        this.isListening = false;
-        const circle = document.getElementById('voiceSearchCircle');
-        const micIcon = document.getElementById('micIcon');
-        
-        circle.classList.remove('listening');
-        micIcon.classList.remove('fa-microphone-slash');
-        micIcon.classList.add('fa-microphone');
-        
+// Start/stop voice recognition
+function toggleVoice() {
+    console.log('Toggle voice clicked, isListening:', isListening);
+    
+    if (!recognition) {
+        initVoice();
+        if (!recognition) return;
+    }
+    
+    if (isListening) {
+        recognition.stop();
+    } else {
+        try {
+            recognition.start();
+        } catch (e) {
+            showError('Could not start voice search: ' + e.message);
+        }
+    }
+}
+
+// Perform search (both voice and text)
+function doSearch(query) {
+    console.log('Searching for:', query);
+    
+    document.getElementById('loadingIndicator').style.display = 'block';
+    
+    fetch('/voice-search/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
+        },
+        body: JSON.stringify({ query: query })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Search results:', data);
+        displayResults(data, query);
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        showError('Search failed. Please try again.');
+    })
+    .finally(() => {
         document.getElementById('loadingIndicator').style.display = 'none';
-    }
+    });
+}
 
-    handleVoiceResult(transcript) {
-        console.log('Voice result:', transcript);
-        
-        // Check if it's a command or search
-        if (this.isCommand(transcript)) {
-            this.handleCommand(transcript);
-        } else {
-            this.performSearch(transcript);
-        }
+// Display search results
+function displayResults(data, query) {
+    if (!data.success) {
+        showError(data.error || 'Search failed');
+        return;
     }
-
-    isCommand(text) {
-        const commands = ['add to cart', 'show wishlist', 'view wishlist', 'checkout', 'buy now', 'home'];
-        return commands.some(cmd => text.toLowerCase().includes(cmd));
+    
+    document.getElementById('searchQuery').textContent = query;
+    document.getElementById('searchResults').style.display = 'block';
+    
+    const container = document.getElementById('resultsContainer');
+    container.innerHTML = '';
+    
+    if (data.results.length === 0) {
+        container.innerHTML = '<div class="col-12"><p class="text-muted">No products found.</p></div>';
+        return;
     }
-
-    handleCommand(command) {
-        fetch('/voice-commands/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ command: command })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.action === 'navigate') {
-                    window.location.href = data.url;
-                } else {
-                    this.showMessage(data.message, 'success');
-                }
-            } else {
-                this.showError(data.error);
-            }
-        })
-        .catch(error => {
-            this.showError('Command failed. Please try again.');
-        });
-    }
-
-    performSearch(query) {
-        fetch('/voice-search/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
-            body: JSON.stringify({ query: query })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                this.displayResults(data);
-            } else {
-                this.showError(data.error);
-            }
-        })
-        .catch(error => {
-            this.showError('Search failed. Please try again.');
-        });
-    }
-
-    displayResults(data) {
-        document.getElementById('searchQuery').textContent = data.query;
-        document.getElementById('searchResults').style.display = 'block';
-        
-        const container = document.getElementById('resultsContainer');
-        container.innerHTML = '';
-        
-        if (data.results.length === 0) {
-            container.innerHTML = '<div class="col-12"><p class="text-muted">No products found for your search.</p></div>';
-            return;
-        }
-        
-        data.results.forEach(product => {
-            const productCard = this.createProductCard(product);
-            container.innerHTML += productCard;
-        });
-    }
-
-    createProductCard(product) {
-        return `
+    
+    data.results.forEach(product => {
+        const card = `
             <div class="col-md-6 col-lg-4 mb-3">
                 <div class="card h-100">
                     ${product.image ? 
-                        `<img src="${product.image}" class="card-img-top" alt="${product.name}" style="height: 150px; object-fit: cover;">` :
+                        `<img src="${product.image}" class="card-img-top" style="height: 150px; object-fit: cover;">` :
                         `<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 150px;">
                             <i class="fas fa-box fa-2x text-muted"></i>
                         </div>`
                     }
                     <div class="card-body">
-                        <h6 class="card-title">${product.name}</h6>
+                        <h6>${product.name}</h6>
                         <p class="text-muted small">${product.category}</p>
-                        <p class="card-text">${product.description}</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-primary fw-bold">$${product.price}</span>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-primary fw-bold">NPR ${product.price}</span>
                             <span class="badge ${product.available ? 'bg-success' : 'bg-danger'}">
-                                ${product.available ? 'Available' : 'Out of Stock'}
+                                ${product.available ? 'In Stock' : 'Out of Stock'}
                             </span>
                         </div>
                         <div class="mt-2">
-                            <a href="${product.url}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            ${product.available ? 
-                                `<a href="/cart/add/${product.id}/" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-cart-plus"></i> Add to Cart
-                                </a>` : ''
-                            }
+                            <a href="${product.url}" class="btn btn-sm btn-primary">View</a>
+                            ${product.available ? `<a href="/cart/add/${product.id}/" class="btn btn-sm btn-outline-primary">Add to Cart</a>` : ''}
                         </div>
                     </div>
                 </div>
             </div>
         `;
-    }
-
-    handleError(error) {
-        let message = 'Voice search error. Please try again.';
-        
-        switch(error) {
-            case 'no-speech':
-                message = 'No speech detected. Please try again.';
-                break;
-            case 'audio-capture':
-                message = 'Microphone not available. Please check your permissions.';
-                break;
-            case 'not-allowed':
-                message = 'Microphone permission denied. Please allow microphone access.';
-                break;
-        }
-        
-        this.showError(message);
-    }
-
-    showError(message) {
-        document.getElementById('errorText').textContent = message;
-        document.getElementById('errorMessage').style.display = 'block';
-        document.getElementById('searchResults').style.display = 'none';
-    }
-
-    showMessage(message, type) {
-        // Create a temporary message element
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.querySelector('.card-body').insertBefore(alertDiv, document.querySelector('.card-body').firstChild);
-        
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 3000);
-    }
-
-    start() {
-        if (this.recognition && !this.isListening) {
-            this.recognition.start();
-        }
-    }
-}
-
-// Helper function to get CSRF token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
-// Initialize voice search when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    const voiceSearch = new VoiceSearch();
-    
-    // Add click event to microphone
-    document.getElementById('voiceSearchCircle').addEventListener('click', function() {
-        voiceSearch.start();
+        container.innerHTML += card;
     });
+}
+
+// Show error message
+function showError(msg) {
+    document.getElementById('errorText').textContent = msg;
+    document.getElementById('errorMessage').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('errorMessage').style.display = 'none';
+    }, 5000);
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== Voice Search Page Loaded ===');
+    console.log('Browser:', navigator.userAgent);
+    
+    // Initialize voice
+    initVoice();
+    
+    // Attach click handler to microphone
+    const mic = document.getElementById('voiceSearchCircle');
+    if (mic) {
+        mic.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🎤 Microphone clicked!');
+            toggleVoice();
+        });
+        console.log('✅ Click handler attached');
+    } else {
+        console.error('❌ Microphone element not found');
+    }
 });
 </script>
 
