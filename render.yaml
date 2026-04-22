@@ -30,9 +30,11 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
 
-  - type: postgres
+  - type: pserv
     name: aaditya-ecommerce-db
+    runtime: postgres
     plan: free
+    autoDeploy: false
     ipAllowList:
       - source: 0.0.0.0/0
         description: everywhere
