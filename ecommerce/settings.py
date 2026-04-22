@@ -82,15 +82,14 @@ WSGI_APPLICATION = 'ecommerce.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'aaditya_store_db',
-        'USER': 'postgres',
-        'PASSWORD': 'Aaditya#32@1',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default='postgresql://postgres:Aaditya#32@1@localhost:5432/aaditya_store_db',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 

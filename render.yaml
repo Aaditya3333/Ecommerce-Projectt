@@ -1,11 +1,15 @@
 services:
   - type: web
-    name: ecommerce-projectt
-    env: python
-    plan: starter
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: gunicorn ecommerce.wsgi:application
-    healthCheckPath: /admin/
+    name: aaditya-ecommerce-store
+    runtime: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn ecommerce.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /
+    autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
@@ -17,17 +21,18 @@ services:
         value: false
       - key: DATABASE_URL
         fromDatabase:
-          name: ecommerce-projectt-db
+          name: aaditya-ecommerce-db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: ecommerce-projectt.onrender.com,localhost,127.0.0.1
-      - key: USE_POSTGRESQL
-        value: true
+        value: aaditya-ecommerce-store.onrender.com,localhost,127.0.0.1
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: PYTHONUNBUFFERED
+        value: "1"
 
-  - type: pserv
-    name: ecommerce-projectt-db
-    plan: starter
-    env: postgres
-    databaseName: aaditya_store_db
-    user: postgres
-    region: oregon
+  - type: postgres
+    name: aaditya-ecommerce-db
+    plan: free
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
